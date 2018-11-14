@@ -35,9 +35,9 @@ namespace ClassicUO.Renderer
 
     public static class Ext
     {
-        public static void DrawIndexedPrimitives(this GraphicsDevice self, PrimitiveType primitiveType, int baseVertex, int startIndex, int primitiveCount)
+        public static void DrawIndexedPrimitivesss(this GraphicsDevice self, PrimitiveType primitiveType, int baseVertex, int startIndex, int primitiveCount)
         {
-            self.DrawIndexedPrimitives(primitiveType, baseVertex, 0, primitiveCount * 2, startIndex, primitiveCount);
+            //self.DrawIndexedPrimitives(primitiveType, baseVertex, 0, primitiveCount * 2, startIndex, primitiveCount);
         }
     }
 

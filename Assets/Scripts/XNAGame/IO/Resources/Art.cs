@@ -72,7 +72,7 @@ namespace ClassicUO.IO.Resources
             {
                 ushort[] pixels = ReadStaticArt(g, out short w, out short h);
                 texture = new SpriteTexture(w, h, false);
-                UnityEngine.ImageConversion.LoadImage(texture.UnityTexture, ReadStaticArtBMP( g ) );
+                UnityEngine.ImageConversion.LoadImage(texture.UnityTexture as UnityEngine.Texture2D, ReadStaticArtBMP( g ) );
                 //texture.SetData(pixels);
                 _usedIndex.Add(g);
                 _picker.Set(g, w, h, pixels);

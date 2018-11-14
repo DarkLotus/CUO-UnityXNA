@@ -46,7 +46,6 @@ namespace ClassicUO.Renderer
         public Vector3 TextureCoordinate;
         public Vector3 Hue;
 
-        VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
 
         public static readonly VertexDeclaration VertexDeclaration = new VertexDeclaration(new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0), // position
                                                                                            new VertexElement(sizeof(float) * 3, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0), // normal
@@ -63,6 +62,8 @@ namespace ClassicUO.Renderer
         };
 
         public static int SizeInBytes => sizeof(float) * 12;
+
+        VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
 
         public override string ToString()
         {

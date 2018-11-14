@@ -1,6 +1,7 @@
 ﻿#define SB1
 #define ORIONSORT
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -74,8 +75,78 @@ namespace ClassicUO.Renderer
             _projectionMatrix = new Matrix(0f, //(float)( 2.0 / (double)viewport.Width ) is the actual value we will use
                                            0.0f, 0.0f, 0.0f, 0.0f, 0f, //(float)( -2.0 / (double)viewport.Height ) is the actual value we will use
                                            0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, -1.0f, 1.0f, 0.0f, 1.0f);
+
+            b = new SpriteBatch( GraphicsDevice );
+            SetupCamera();
+
         }
 
+        // Setup an orthographic camera at (0, 0, -1) aiming at (0, 0, 1)
+        // The vertical half-size of the orthographic camera is 3 units.
+        UnityEngine.Camera _cam1;
+        public void SetupCamera()
+        {
+           /* var original = UnityEngine.GameObject.FindWithTag( "MainCamera" );
+            _cam1 = (UnityEngine.Camera)UnityEngine.Camera.Instantiate(
+             original.GetComponent<UnityEngine.Camera>(),
+             new UnityEngine.Vector3( 0, 0, -1 ),
+             UnityEngine.Quaternion.FromToRotation(
+              new UnityEngine.Vector3( 0, 0, 0 ),
+              new UnityEngine.Vector3( 0, 0, 1 )
+             )
+            );
+            _cam1.orthographicSize = 3;
+            _cam1.orthographic = true;
+            _cam1.backgroundColor = UnityEngine.Color.green;
+            _cam1.depth = 0;
+            _cam1.enabled = true;
+            UnityEngine.GameObject.Destroy( original );*/
+        }
+        float z = 0;
+        // Create a quad mesh
+        public UnityEngine.Mesh CreateMesh( SpriteVertex[] sV )
+        {
+
+            UnityEngine.Mesh mesh = new UnityEngine.Mesh();
+            
+            UnityEngine.Vector3[] vertices = new UnityEngine.Vector3[]
+            {
+            new UnityEngine.Vector3( sV[2].Pos.x, sV[2].Pos.y,  0),
+            new UnityEngine.Vector3( sV[3].Pos.x, sV[3].Pos.y, 0),
+            new UnityEngine.Vector3(sV[0].Pos.x, sV[0].Pos.y, 0),
+            new UnityEngine.Vector3(sV[1].Pos.x, sV[1].Pos.y, 0),
+            };
+
+            UnityEngine.Vector2[] uv = new UnityEngine.Vector2[]
+            {
+            new UnityEngine.Vector2(1,1),
+            new UnityEngine.Vector2(0,1),
+            new UnityEngine.Vector2(1,0),
+            new UnityEngine.Vector2(0,0),
+            };
+
+            /*            new UnityEngine.Vector2(0,0),
+            new UnityEngine.Vector2(1, 0),
+            new UnityEngine.Vector2(0, 1),
+            new UnityEngine.Vector2(1,1),*/
+            int[] triangles = new int[]
+            {
+               0,2,1, 2,3,1
+            
+            };
+
+            mesh.vertices = vertices;
+            mesh.uv = uv;
+            mesh.triangles = triangles;
+            mesh.RecalculateNormals();
+            
+            return mesh;
+        }
+
+
+
+
+        private SpriteBatch b;
         public GraphicsDevice GraphicsDevice { get; }
 
         public Matrix ProjectionMatrixWorld => Matrix.Identity;
@@ -116,14 +187,51 @@ namespace ClassicUO.Renderer
 #endif
             _drawingArea.min = new UnityEngine.Vector2(_minVector3.X,_minVector3.Y);
             _drawingArea.max = new UnityEngine.Vector2( GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height);
+            b.Begin(SpriteSortMode.Immediate,BlendState.AlphaBlend);
+            
         }
 
         public void End()
         {
             EnsureStarted();
-            Flush();
+           // Flush();
             _started = false;
+            b.End();
         }
+
+        public void DrawTexture( Texture2D texture, SpriteVertex[] vertices )
+        {
+            // Create object
+
+            UnityEngine.GUI.DrawTexture( new UnityEngine.Rect( vertices[0].Pos, vertices[0].Pos - vertices[3].Pos ), texture.UnityTexture2D );
+ 
+
+            return;
+            var _m1 = CreateMesh( vertices );
+
+            //UnityEngine.Graphics.DrawMesh( _m1, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity, mat, 0 );
+            return;
+            var item = (UnityEngine.GameObject)new UnityEngine.GameObject(
+             "HelloWorld",
+             typeof( UnityEngine.MeshRenderer ), // Required to render
+             typeof( UnityEngine.MeshFilter )    // Required to have a mesh
+            );
+            item.GetComponent< UnityEngine.MeshFilter>().mesh = _m1;
+
+            // Set texture
+
+            item.GetComponent< UnityEngine.Renderer>().material.mainTexture = texture.UnityTexture2D;
+
+            // Set shader for this sprite; unlit supporting transparency
+            // If we dont do this the sprite seems 'dark' when drawn. 
+            var shader = UnityEngine.Shader.Find( "Unlit/Transparent" );
+            item.GetComponent<UnityEngine.Renderer>().material.shader = shader;
+
+            // Set position
+             item.transform.position = new UnityEngine.Vector3( 0,0, z );
+            z += 0.01f;
+        }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe bool DrawSprite(Texture2D texture, SpriteVertex[] vertices, Techniques technique = Techniques.Default, Rectangle? scissorRectangle = null)
@@ -144,8 +252,10 @@ namespace ClassicUO.Renderer
 
             if (!draw)
                 return false;
-            SpriteBatch b = new SpriteBatch( GraphicsDevice );
-            b.Draw( texture, new Vector2( vertices[0].Pos.x, vertices[0].Pos.y), Color.White );
+
+            DrawTexture( texture, vertices );
+            //new Vector2( vertices[0].Pos.x, vertices[0].Pos.y)
+            //b.Draw(texture,new Rectangle(0,0,640,480), Color.White );
             return true;
             if (_numSprites >= MAX_SPRITES)
                 Flush();
@@ -174,10 +284,10 @@ namespace ClassicUO.Renderer
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void DrawShadow(Texture2D texture, SpriteVertex[] vertices, Vector2 position, bool flip, float z)
         {
-            return;
+            
             if (texture == null || texture.IsDisposed)
                 return;
-
+            
             if (_numSprites >= MAX_SPRITES)
                 Flush();
 #if !ORIONSORT
@@ -233,25 +343,24 @@ namespace ClassicUO.Renderer
             GraphicsDevice.SamplerStates[0] = SamplerState.PointClamp;
             GraphicsDevice.SamplerStates[1] = SamplerState.PointClamp;
             GraphicsDevice.SamplerStates[2] = SamplerState.PointClamp;*/
-           /* Viewport viewport = GraphicsDevice.Viewport;
+           Viewport viewport = GraphicsDevice.Viewport;
             _projectionMatrix.M11 = (float) (2.0 / viewport.Width);
             _projectionMatrix.M22 = (float) (-2.0 / viewport.Height);
             _projectionMatrix.M41 = -1 - 0.5f * _projectionMatrix.M11;
             _projectionMatrix.M42 = 1 - 0.5f * _projectionMatrix.M22;
             Matrix.Multiply(ref _transformMatrix, ref _projectionMatrix, out _matrixTransformMatrix);
-            _projectionMatrixEffect.SetValue(_matrixTransformMatrix);
-            _worldMatrixEffect.SetValue(_transformMatrix);
-            */
+           // _projectionMatrixEffect.SetValue(_matrixTransformMatrix);
+           // _worldMatrixEffect.SetValue(_transformMatrix);
+            
             //_projectionMatrixEffect.SetValue(ProjectionMatrixScreen);
-            //_worldMatrixEffect.SetValue(ProjectionMatrixWorld);
+           // _worldMatrixEffect.SetValue(ProjectionMatrixWorld);
            // _viewportEffect.SetValue(new Vector2(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
-           // GraphicsDevice.SetVertexBuffer(_vertexBuffer);
+            //GraphicsDevice.SetVertexBuffer(_vertexBuffer);
            // GraphicsDevice.Indices = _indexBuffer;
         }
 
         private unsafe void Flush()
         {
-            
             ApplyStates();
 
             if (_numSprites == 0)
@@ -321,8 +430,9 @@ namespace ClassicUO.Renderer
                 //GraphicsDevice.ScissorRectangle = info.ScissorRectangle.Value;
             }
 
-            //GraphicsDevice.Textures[0] = info.Texture;
-            GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, baseSprite * 4, 0, batchSize * 2);
+           // GraphicsDevice.Textures[0] = info.Texture;
+           // GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, baseSprite * 4, 0, batchSize * 2);
+           // GraphicsDevice.Dr
         }
 
         private static short[] GenerateIndexArray()

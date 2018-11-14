@@ -20,15 +20,15 @@ public class XNATest : MonoBehaviour {
 		Application.targetFrameRate = 60;
 
         // Add an audio source and tell the media player to use it for playing sounds
-        Microsoft.Xna.Framework.Media.MediaPlayer.AudioSource = gameObject.AddComponent<AudioSource>();
+       //Microsoft.Xna.Framework.Media.MediaPlayer..AudioSource = gameObject.AddComponent<AudioSource>();
 
 		drawQueue = new DrawQueue();
         Log.Start( LogTypes.All );
         game = new GameLoop();
-        game.DrawQueue = drawQueue;
-        game.Initialize();
+        // game.DrawQueue = drawQueue;
+        game.UnityInitialize();
 
-        game.Run();
+       // game.Run();
 		timeleft = updateInterval;
         //Application.targetFrameRate = 30;
 
@@ -48,10 +48,9 @@ public class XNATest : MonoBehaviour {
 		{
 			deltaTime = 0.050f;
 		}
-		//Debug.Log(deltaTime);
-		game.Tick(deltaTime);
+        //Debug.Log(deltaTime);
+        game.UnityUpdate();// Tick(deltaTime);
         drawQueue.Clear();
-		
 		timeleft -= Time.deltaTime;
 	    accum += Time.timeScale/Time.deltaTime;
 	    ++frames;
@@ -70,8 +69,13 @@ public class XNATest : MonoBehaviour {
 			
 	}
 	bool a= false;
-	
+
     void OnGUI()
+    {
+        game.UnityDraw();
+
+    }
+   /* void OnGUI()
     {
         // Draw sprites from SpriteBatch.Draw()
 		for (int i = 0; i < drawQueue.LastSpriteQueue.Length; i++) 
@@ -127,7 +131,7 @@ public class XNATest : MonoBehaviour {
         //GUILayout.Label()
 		//GUI.color = Color.black;
         //GUILayout.Label(string.Format("{0} fps, {1} sprite draw calls", fps, drawQueue.LastSpriteQueue.Length));
-    }
+    }*/
 		
 
 }

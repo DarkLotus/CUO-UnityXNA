@@ -23,7 +23,7 @@
 
 using System.Diagnostics;
 using System.IO;
-
+using System.Text;
 using ClassicUO.Configuration;
 using ClassicUO.Game;
 using ClassicUO.Game.Gumps;
@@ -53,8 +53,16 @@ namespace ClassicUO
         private SceneManager _sceneManager;
         private UIManager _uiManager;
 
-        public void Initialize()
+        private bool initran = false;
+        public GameLoop()
         {
+            Initialize();
+        }
+        protected override void Initialize()
+        {
+            if ( initran )
+                return;
+            initran = true;
             //uncomment it and fill it to save your first settings
             //Settings settings1 = new Settings()
             //{
@@ -93,13 +101,13 @@ namespace ClassicUO
             stopwatch.Stop();
 
             //Register Service Stack
-            Service.Register(this);
-            Service.Register(_sb3D = new SpriteBatch3D(GraphicsDevice));
-            Service.Register(_sbUI = new SpriteBatchUI(GraphicsDevice));
-            Service.Register(new InputManager());
-            Service.Register(_uiManager = new UIManager());
-            Service.Register(_sceneManager = new SceneManager());
-            Service.Register(_journalManager = new JournalData());
+            Service.Register( this );
+            Service.Register( _sb3D = new SpriteBatch3D( GraphicsDevice ) );
+            Service.Register( _sbUI = new SpriteBatchUI( GraphicsDevice ) );
+            Service.Register( new InputManager() );
+            Service.Register( _uiManager = new UIManager() );
+            Service.Register( _sceneManager = new SceneManager() );
+            Service.Register( _journalManager = new JournalData() );
 
             //Register Command Stack
             PartySystem.RegisterCommands();
@@ -188,6 +196,11 @@ namespace ClassicUO
             _infoText.Text = $"FPS: {CurrentFPS}\nObjects: {_sceneManager.CurrentScene.RenderedObjectsCount}\nCalls: {_sb3D.Calls}\nMerged: {_sb3D.Merged}\nPos: {(World.Player == null ? "" : World.Player.Position.ToString())}\nSelected: {(_sceneManager.CurrentScene is GameScene gameScene && gameScene.SelectedObject != null ? gameScene.SelectedObject.ToString() : string.Empty)}\nStats: {NetClient.Socket.Statistics}";
             _infoText.Draw(_sbUI, new Vector3(Window.ClientBounds.Width - 150, 20, 0));
             _sbUI.End();
+        }
+
+        public override void DummyInitialize( StringBuilder bundleMappings )
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

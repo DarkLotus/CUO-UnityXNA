@@ -155,10 +155,7 @@ namespace ClassicUO
             Profiler.EnterContext("OutOfContext");
         }
 
-        internal void Initialize()
-        {
-            //throw new NotImplementedException();
-        }
+     
 
         private void SuppressDraw()
         {

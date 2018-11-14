@@ -125,7 +125,7 @@ namespace ClassicUO.IO.Resources
                     result = stream.ToArray();
                 }
 
-                UnityEngine.ImageConversion.LoadImage( texture.UnityTexture, result );
+                UnityEngine.ImageConversion.LoadImage( texture.UnityTexture as UnityEngine.Texture2D, result );
                // texture.SetData(pixels);
                 _usedIndex.Add(g);
                 _picker.Set(g, w, h, pixels);
