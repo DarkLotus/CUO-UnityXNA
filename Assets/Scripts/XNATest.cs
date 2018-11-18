@@ -17,7 +17,7 @@ public class XNATest : MonoBehaviour {
 	// Use this for initialization
 	void Start () 
     {
-		Application.targetFrameRate = 60;
+		Application.targetFrameRate = 240;
 
         // Add an audio source and tell the media player to use it for playing sounds
         Microsoft.Xna.Framework.Media.MediaPlayer.AudioSource = gameObject.AddComponent<AudioSource>();
@@ -51,8 +51,8 @@ public class XNATest : MonoBehaviour {
 		//Debug.Log(deltaTime);
 		game.Tick(deltaTime);
         drawQueue.Clear();
-		
-		timeleft -= Time.deltaTime;
+
+        timeleft -= Time.deltaTime;
 	    accum += Time.timeScale/Time.deltaTime;
 	    ++frames;
 	    
@@ -70,13 +70,28 @@ public class XNATest : MonoBehaviour {
 			
 	}
 	bool a= false;
-	
+    private void OnPostRenderrrr()
+    {
+        GL.PushMatrix();
+        GL.LoadPixelMatrix( 0, Screen.width, Screen.height, 0 );
+
+        for ( int i = 0; i < drawQueue.LastSpriteQueue.Length; i++ )
+        {
+            DrawSpriteCall call = drawQueue.LastSpriteQueue[i];
+            Graphics.DrawTexture(
+     new Rect( call.Position.X, call.Position.Y, call.Texture2D.UnityTexture.width, call.Texture2D.UnityTexture.height ),
+     call.Texture2D.UnityTexture );
+        }
+
+        GL.PopMatrix();
+    }
     void OnGUI()
     {
         // Draw sprites from SpriteBatch.Draw()
 		for (int i = 0; i < drawQueue.LastSpriteQueue.Length; i++) 
 		{
 			DrawSpriteCall call = drawQueue.LastSpriteQueue[i];
+
 			float x = call.Position.X;
 			float y = call.Position.Y;
 			x -= call.Origin.X;
@@ -105,9 +120,12 @@ public class XNATest : MonoBehaviour {
 				sourceRect.y = 1-sourceRect.y;
 				sourceRect.height *= -1;
 			}
-			
-			GUI.DrawTextureWithTexCoords(new Rect(x,y,width * Mathf.Abs(sourceRect.width),height * Mathf.Abs(sourceRect.height)), call.Texture2D.UnityTexture, sourceRect);
-			
+            if ( call.Texture2D.RenderTexture != null )
+            {
+                GUI.DrawTextureWithTexCoords( new Rect( x, y, width * Mathf.Abs( sourceRect.width ), height * Mathf.Abs( sourceRect.height ) ), call.Texture2D.RenderTexture, sourceRect );
+            }
+            else
+            GUI.DrawTextureWithTexCoords(new Rect(x,y,width * Mathf.Abs(sourceRect.width),height * Mathf.Abs(sourceRect.height)), call.Texture2D.UnityTexture, sourceRect);
 		}
 		
         // Draw strings from SpriteBatch.DrawString()

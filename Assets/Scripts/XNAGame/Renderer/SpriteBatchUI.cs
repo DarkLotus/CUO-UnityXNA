@@ -119,6 +119,9 @@ namespace ClassicUO.Renderer
             _vertexBufferUI[3].TextureCoordinate.Z = 0;
             _vertexBufferUI[0].Hue = _vertexBufferUI[1].Hue = _vertexBufferUI[2].Hue = _vertexBufferUI[3].Hue = hue;
 
+            SpriteBatch b = new SpriteBatch( GraphicsDevice );
+            b.Draw( texture, new Vector2(position.X,position.Y), sourceRect, Color.White );
+            return true;
             return DrawSprite(texture, _vertexBufferUI, Techniques.Hued, scissorRectangle);
         }
 
@@ -163,7 +166,9 @@ namespace ClassicUO.Renderer
             _vertexBufferUI[3].TextureCoordinate.Y = maxY;
             _vertexBufferUI[3].TextureCoordinate.Z = 0;
             _vertexBufferUI[0].Hue = _vertexBufferUI[1].Hue = _vertexBufferUI[2].Hue = _vertexBufferUI[3].Hue = hue;
-
+            SpriteBatch b = new SpriteBatch( GraphicsDevice );
+            b.Draw( texture, new Vector2( destRect.X, destRect.Y ), sourceRect, Color.White );
+            return true;
             return DrawSprite(texture, _vertexBufferUI, Techniques.Hued, scissorRectangle);
         }
 
@@ -204,7 +209,6 @@ namespace ClassicUO.Renderer
             _vertexBufferUI[3].TextureCoordinate.Y = 1;
             _vertexBufferUI[3].TextureCoordinate.Z = 0;
             _vertexBufferUI[0].Hue = _vertexBufferUI[1].Hue = _vertexBufferUI[2].Hue = _vertexBufferUI[3].Hue = hue;
-
             return DrawSprite(texture, _vertexBufferUI, Techniques.Hued, scissorRectangle);
         }
 

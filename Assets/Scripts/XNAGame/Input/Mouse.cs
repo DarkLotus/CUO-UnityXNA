@@ -59,21 +59,18 @@ namespace ClassicUO.Input
 
         public static void Update()
         {
-            if (!MouseInWindow)
-            {
-             ///   SDL.SDL_GetGlobalMouseState(out int x, out int y);
-             //  // SDL.SDL_GetWindowPosition(Microsoft.Xna.Framework.Input.Mouse.WindowHandle, out int winX, out int winY);
+            if ( UnityEngine.Input.mousePosition.x < 0 || UnityEngine.Input.mousePosition.y < 0 || UnityEngine.Input.mousePosition.x > UnityEngine.Screen.width || UnityEngine.Input.mousePosition.y > UnityEngine.Screen.height )
+                return;
+                _position.X = (int)UnityEngine.Input.mousePosition.x;
+            _position.Y = UnityEngine.Screen.height - ( int)UnityEngine.Input.mousePosition.y;
 
-              //  _position.X = x - winX;
-              //  _position.Y = y - winY;
-            }
-            else
-            {
-              //  SDL.SDL_GetMouseState(out _position.X, out _position.Y);
-            }
+            LButtonPressed = UnityEngine.Input.GetMouseButtonDown( 0 );
+            RButtonPressed = UnityEngine.Input.GetMouseButtonDown( 1 );
 
             IsDragging = LButtonPressed || RButtonPressed || MButtonPressed;
             RealPosition = Position;
+
+
         }
     }
 }

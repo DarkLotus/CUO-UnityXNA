@@ -60,7 +60,7 @@ namespace ClassicUO
             //{
 
             //};
-
+            
             //ConfigurationResolver.Save(settings1, "settings.json");
             Settings settings = ConfigurationResolver.Load<Settings>(Path.Combine( "Z:\\ClassicUO\\bin\\Debug", "settings.json"));
             Service.Register(settings);
@@ -135,6 +135,7 @@ namespace ClassicUO
         protected override void OnInputUpdate(double totalMS, double frameMS)
         {
             Mouse.Update();
+            InputManager.Update();
         }
 
         protected override void OnNetworkUpdate(double totalMS, double frameMS)

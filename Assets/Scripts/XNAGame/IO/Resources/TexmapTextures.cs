@@ -23,8 +23,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
-
+using System.Runtime.InteropServices;
 using ClassicUO.Renderer;
 
 namespace ClassicUO.IO.Resources
@@ -115,7 +117,7 @@ namespace ClassicUO.IO.Resources
                 if (pixels == null || pixels.Length == 0)
                     return null;
                 texture = new SpriteTexture(size, size, false);
-                texture.SetData(pixels);
+                           texture.SetData(pixels);
                 _usedIndex.Add(g);
             }
 

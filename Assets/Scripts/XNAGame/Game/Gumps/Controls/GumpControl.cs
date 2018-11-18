@@ -225,9 +225,14 @@ namespace ClassicUO.Game.Gumps.Controls
 
         public int ScreenCoordinateY => ParentY + Y;
 
-        public virtual void OnKeyDown( SDL.SDL_Keycode key, SDL.SDL_Keymod mod )
+        protected virtual void OnKeyDown( SDL.SDL_Keycode key, SDL.SDL_Keymod mod )
         {
-            throw new NotImplementedException();
+            Parent?.OnKeyDown( key, mod );
+        }
+
+        protected virtual void OnKeyUp( SDL.SDL_Keycode key, SDL.SDL_Keymod mod )
+        {
+            Parent?.OnKeyUp( key, mod );
         }
 
         public GumpControl Parent
@@ -286,12 +291,13 @@ namespace ClassicUO.Game.Gumps.Controls
 
         internal void InvokeKeyUp( SDL.SDL_Keycode sym, SDL.SDL_Keymod mod )
         {
-           // throw new NotImplementedException();
+            OnKeyUp( sym, mod );
         }
 
         internal void InvokeKeyDown( SDL.SDL_Keycode sym, SDL.SDL_Keymod mod )
         {
-           // throw new NotImplementedException();
+            OnKeyDown( sym, mod );
+
         }
 
         public int ActivePage

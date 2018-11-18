@@ -169,8 +169,9 @@ namespace ClassicUO.Renderer
                 src.Height = Height - src.Y;
                 dst.Height = src.Height;
             }
-
-            return spriteBatch.Draw2D(Texture, dst, src, hue ?? Vector3.Zero);
+            var sb = new Microsoft.Xna.Framework.Graphics.SpriteBatch( spriteBatch.GraphicsDevice );
+            sb.DrawString(null,Text, new Vector2( dst.X, dst.Y ), Microsoft.Xna.Framework.Graphics.Color.White );
+            return true;// return spriteBatch.Draw2D(Texture, dst, src, hue ?? Vector3.Zero);
         }
 
         public void CreateTexture()

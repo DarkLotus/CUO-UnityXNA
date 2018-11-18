@@ -63,7 +63,7 @@ namespace ClassicUO.Game.Scenes
 
         public float Scale { get; set; } = 1f;
 
-        public Texture2D ViewportTexture => _renderTarget;
+        public RenderTarget2D ViewportTexture => _renderTarget;
 
         public Point MouseOverWorldPosition => new Point(Mouse.Position.X - _viewPortGump.ScreenCoordinateX, Mouse.Position.Y - _viewPortGump.ScreenCoordinateY);
 
@@ -132,7 +132,7 @@ namespace ClassicUO.Game.Scenes
         public override void Unload()
         {
             NetClient.Socket.Disconnect();
-            _renderTarget?.Dispose();
+            //_renderTarget?.Dispose();
             UIManager.Clear();
             CleaningResources();
             World.Clear();
@@ -222,9 +222,9 @@ namespace ClassicUO.Game.Scenes
             if (!World.InGame)
                 return;
 
-            if (_renderTarget == null || _renderTarget.Width != (int) (_settings.GameWindowWidth / Scale) || _renderTarget.Height != (int) (_settings.GameWindowHeight / Scale))
+            if (_renderTarget == null || _renderTarget.width != (int) (_settings.GameWindowWidth / Scale) || _renderTarget.height != (int) (_settings.GameWindowHeight / Scale))
             {
-                _renderTarget?.Dispose();
+                //_renderTarget?.Dispose();
                 _renderTarget = new RenderTarget2D(Device, (int) (_settings.GameWindowWidth / Scale), (int) (_settings.GameWindowHeight / Scale), false, SurfaceFormat.Bgra5551, DepthFormat.Depth24Stencil8, 0, RenderTargetUsage.DiscardContents);
             }
 

@@ -138,7 +138,7 @@ namespace ClassicUO.Game.Gumps.Controls
             _entry.InsertString(c);
         }
 
-        public override void OnKeyDown(SDL.SDL_Keycode key, SDL.SDL_Keymod mod)
+        protected override void OnKeyDown(SDL.SDL_Keycode key, SDL.SDL_Keymod mod)
         {
             switch (key)
             {

@@ -4,17 +4,18 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Microsoft.Xna.Framework.Graphics
 {
 	public class Texture2D : IDisposable
 	{
-        private UnityEngine.Texture2D unityTexture;
+        private UnityEngine.Texture unityTexture;
 
-        public UnityEngine.Texture2D UnityTexture
+        public UnityEngine.Texture UnityTexture
         {
-            get { return unityTexture; }
+            get { return ( UnityEngine.Texture )unityTexture; }
             set { unityTexture = value; }
         }
 
@@ -23,13 +24,18 @@ namespace Microsoft.Xna.Framework.Graphics
 
         }
         public Rectangle Bounds => new Rectangle(0, 0, Width, Height);
+        public UnityEngine.RenderTexture RenderTexture => unityTexture as UnityEngine.RenderTexture;
 
         public Texture2D(UnityEngine.Texture2D unityTexture)
         {
             // TODO: Complete member initialization
             this.unityTexture = unityTexture;
         }
-
+        public Texture2D( UnityEngine.RenderTexture unityTexture )
+        {
+            // TODO: Complete member initialization
+            this.unityTexture = unityTexture;
+        }
         public Texture2D( GraphicsDevice graphicsDevice, int width, int height )
         {
             UnityTexture = new UnityEngine.Texture2D( width, height);
@@ -68,11 +74,22 @@ namespace Microsoft.Xna.Framework.Graphics
                 return;
             }
 
-            byte[] databy = new byte[elementCount * 2];
-            Buffer.BlockCopy( data, 0, databy, 0, elementCount );
-            UnityEngine.ImageConversion.LoadImage( UnityTexture, databy );
-            UnityTexture.Apply();
-            File.WriteAllBytes( "test.png", UnityEngine.ImageConversion.EncodeToPNG( UnityTexture ) );
+            var bmp = new Bitmap( Width,Height, PixelFormat.Format16bppArgb1555 );
+            BitmapData bd = bmp.LockBits(
+                new System.Drawing.Rectangle( 0, 0, Width, Height ), ImageLockMode.WriteOnly, PixelFormat.Format16bppArgb1555 );
+            byte[] buf = new byte[elementCount * 2];
+            Buffer.BlockCopy( data, 0, buf, 0, buf.Length );
+            Marshal.Copy( buf, 0, bd.Scan0, buf.Length );
+            bmp.UnlockBits( bd );
+
+            byte[] result = null;
+            using ( MemoryStream stream = new MemoryStream() )
+            {
+                bmp.Save( stream, ImageFormat.Png );
+                result = stream.ToArray();
+            }
+
+            UnityEngine.ImageConversion.LoadImage( UnityTexture as UnityEngine.Texture2D, result );
             return;
 
             UnityEngine.Color[] cols = new UnityEngine.Color[elementCount];
@@ -95,7 +112,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 cols[i] = new UnityEngine.Color( (byte)red, (byte)green, (byte)blue, 255 );
             }
 
-             var dst = UnityTexture.GetRawTextureData<UnityEngine.Color>();
+             /*var dst = UnityTexture.GetRawTextureData<UnityEngine.Color>();
             for ( int i = 0; i < elementCount; i++ )
                 if(i < cols.Length && i < dst.Length)
                     dst[i] = cols[i];
@@ -103,7 +120,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 {
                     Console.Write( "a" );
                 }
-            UnityTexture.Apply();
+            UnityTexture.Apply();*/
             //TODO
         }
         }

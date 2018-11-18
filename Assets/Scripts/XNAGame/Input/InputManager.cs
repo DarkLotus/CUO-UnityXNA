@@ -264,6 +264,68 @@ namespace ClassicUO.Input
 
         public static event EventHandler<string> TextInput;
 
+        public static void Update()
+        {
+            if ( UnityEngine.Input.GetMouseButtonDown( 0 ) )
+            {
+                LeftMouseButtonDown.Raise();
+
+                Mouse.Begin();
+                Mouse.LDropPosition = Mouse.Position;
+                Mouse.CancelDoubleClick = false;
+                uint ticks = (uint)DateTime.Now.Millisecond;
+
+                if ( Mouse.LastLeftButtonClickTime + Mouse.MOUSE_DELAY_DOUBLE_CLICK >= ticks )
+                {
+                    Mouse.LastLeftButtonClickTime = 0;
+
+                    if ( LeftMouseDoubleClick != null && !LeftMouseDoubleClick.Invoke() )
+                        LeftMouseButtonDown.Raise();
+                    else
+                        Mouse.LastLeftButtonClickTime = 0xFFFF_FFFF;
+
+                }
+                else
+                {
+                    LeftMouseButtonDown.Raise();
+                    Mouse.LastLeftButtonClickTime = Mouse.CancelDoubleClick ? 0 : ticks;
+                }
+
+               
+
+            }
+            if ( UnityEngine.Input.GetMouseButtonUp( 0 ) )
+            {
+                if ( Mouse.LastLeftButtonClickTime != 0xFFFF_FFFF )
+                    LeftMouseButtonUp.Raise();
+            }
+            if ( UnityEngine.Input.GetMouseButtonDown( 1 ) )
+            {
+                RightMouseButtonDown.Raise();
+            }
+            if ( UnityEngine.Input.GetMouseButtonUp( 1 ) )
+            {
+                RightMouseButtonUp.Raise();
+            }
+
+            foreach ( UnityEngine.KeyCode kcode in Enum.GetValues( typeof( UnityEngine.KeyCode ) ) )
+            {
+               // if ( UnityEngine.Input.GetKeyDown( kcode ) )
+                    //KeyDown.Raise(kcode);
+
+            }
+
+
+            if ( Mouse.IsDragging ) MouseDragging.Raise();
+
+            if ( Mouse.IsDragging && !_dragStarted )
+            {
+                DragBegin.Raise();
+                _dragStarted = true;
+            }
+
+        }
+
         private unsafe int HookFunc(IntPtr userdata, IntPtr ev)
         {
            /* SDL_Event* e = (SDL_Event*) ev;

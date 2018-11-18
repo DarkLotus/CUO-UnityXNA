@@ -36,13 +36,19 @@ namespace Microsoft.Xna.Framework.Graphics
         {
 
         }
-        internal void DrawIndexedPrimitives( PrimitiveType primitiveType, int baseVertex, int minVertexIndex, int numVertices, int startIndex, int primitiveCount )
+        /*internal void DrawIndexedPrimitives( PrimitiveType primitiveType, int baseVertex, int minVertexIndex, int numVertices, int startIndex, int primitiveCount )
         {
             throw new NotImplementedException();
-        }
+        }*/
         internal void SetRenderTarget( RenderTarget2D renderTarget )
         {
-            throw new NotImplementedException();
+            var cam = GameObject.FindWithTag( "MainCamera" ).GetComponent<Camera>();
+            if(renderTarget == null)
+                cam.Render();
+            cam.targetTexture = renderTarget;
+            
+
+
         }
 
  

@@ -21,11 +21,12 @@
 
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-
+using System.Runtime.InteropServices;
 using ClassicUO.Renderer;
 
 namespace ClassicUO.IO.Resources
@@ -72,8 +73,7 @@ namespace ClassicUO.IO.Resources
             {
                 ushort[] pixels = ReadStaticArt(g, out short w, out short h);
                 texture = new SpriteTexture(w, h, false);
-                UnityEngine.ImageConversion.LoadImage(texture.UnityTexture, ReadStaticArtBMP( g ) );
-                //texture.SetData(pixels);
+                texture.SetData(pixels);
                 _usedIndex.Add(g);
                 _picker.Set(g, w, h, pixels);
             }
@@ -139,82 +139,7 @@ namespace ClassicUO.IO.Resources
             }
         }
 
-        private static unsafe byte[] ReadStaticArtBMP( ushort graphic  )
-        {
-            System.Drawing.Bitmap bmp;
-            graphic &= FileManager.GraphicMask;
-            (int length, int extra, bool patcher) = _file.SeekByEntryIndex( graphic + 0x4000 );
-          
-            fixed ( byte* data = _file.ReadArray<byte>(length ))
-            {
-                var bindata = (ushort*)data;
-                int count = 2;
-                //bin.ReadInt32();
-                int width = bindata[count++];
-                int height = bindata[count++];
-
-                if ( width <= 0 || height <= 0 )
-                {
-                    return null;
-                }
-
-                var lookups = new int[height];
-
-                int start = ( height + 4 );
-
-                for ( int i = 0; i < height; ++i )
-                {
-                    lookups[i] = ( start + ( bindata[count++] ) );
-                }
-
-                bmp = new Bitmap( width, height, PixelFormat.Format16bppArgb1555 );
-                BitmapData bd = bmp.LockBits(
-                    new Rectangle( 0, 0, width, height ), ImageLockMode.WriteOnly, PixelFormat.Format16bppArgb1555 );
-
-                var line = (ushort*)bd.Scan0;
-                int delta = bd.Stride >> 1;
-
-                for ( int y = 0; y < height; ++y, line += delta )
-                {
-                    count = lookups[y];
-
-                    ushort* cur = line;
-                    ushort* end;
-                    int xOffset, xRun;
-
-                    while ( ( ( xOffset = bindata[count++] ) + ( xRun = bindata[count++] ) ) != 0 )
-                    {
-                        if ( xOffset > delta )
-                        {
-                            break;
-                        }
-                        cur += xOffset;
-                        if ( xOffset + xRun > delta )
-                        {
-                            break;
-                        }
-                        end = cur + xRun;
-
-                        while ( cur < end )
-                        {
-                            *cur++ = (ushort)( bindata[count++] ^ 0x8000 );
-                        }
-                    }
-                }
-                bmp.UnlockBits( bd );
-            }
-            byte[] result = null;
-            using ( MemoryStream stream = new MemoryStream() )
-            {
-                bmp.Save( stream, ImageFormat.Png );
-                result = stream.ToArray();
-            }
-
-            return result;
-        }
-
-
-
+        
         private static unsafe ushort[] ReadStaticArt(ushort graphic, out short width, out short height)
         {
             graphic &= FileManager.GraphicMask;

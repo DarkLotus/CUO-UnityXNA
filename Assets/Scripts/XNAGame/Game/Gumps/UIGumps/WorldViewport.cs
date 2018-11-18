@@ -52,7 +52,11 @@ namespace ClassicUO.Game.Gumps.UIGumps
             _rect.Y = (int) position.Y;
             _rect.Width = Width;
             _rect.Height = Height;
-            spriteBatch.Draw2D(_scene.ViewportTexture, _rect, Vector3.Zero);
+
+            Microsoft.Xna.Framework.Graphics.SpriteBatch b = new Microsoft.Xna.Framework.Graphics.SpriteBatch( spriteBatch.GraphicsDevice );
+            var text = new Microsoft.Xna.Framework.Graphics.Texture2D( _scene.ViewportTexture );
+            b.Draw( text, new Vector2( position.X, position.Y ), _rect, Microsoft.Xna.Framework.Graphics.Color.White );
+            // spriteBatch.Draw2D(_scene.ViewportTexture, _rect, Vector3.Zero);
 
             return base.Draw(spriteBatch, position, hue);
         }

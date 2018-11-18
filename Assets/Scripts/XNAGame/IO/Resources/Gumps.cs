@@ -110,23 +110,8 @@ namespace ClassicUO.IO.Resources
                     return null;
                 texture = new SpriteTexture(w, h, false);
 
-                var bmp = new Bitmap( w, h, PixelFormat.Format16bppArgb1555 );
-                BitmapData bd = bmp.LockBits(
-                    new Rectangle( 0, 0, w, h ), ImageLockMode.WriteOnly, PixelFormat.Format16bppArgb1555 );
-                byte[] buf = new byte[pixels.Length * 2];
-                Buffer.BlockCopy( pixels, 0, buf, 0, buf.Length );
-                Marshal.Copy( buf, 0, bd.Scan0, buf.Length);
-                bmp.UnlockBits(bd);
-
-                byte[] result = null;
-                using ( MemoryStream stream = new MemoryStream() )
-                {
-                    bmp.Save( stream, ImageFormat.Png );
-                    result = stream.ToArray();
-                }
-
-                UnityEngine.ImageConversion.LoadImage( texture.UnityTexture, result );
-               // texture.SetData(pixels);
+               
+                texture.SetData(pixels);
                 _usedIndex.Add(g);
                 _picker.Set(g, w, h, pixels);
             }
@@ -170,11 +155,11 @@ namespace ClassicUO.IO.Resources
             return (w * bitsPerPixel + (padBits - 1)) / padBits * padToNBytes;
         }
 
-        public static unsafe ushort[] GetGumpPixels(int index, out int width, out int height)
+        public static unsafe ushort[] GetGumpPixels( int index, out int width, out int height )
         {
-            (int length, int extra, bool patcher) = _file.SeekByEntryIndex(index);
+            (int length, int extra, bool patcher) = _file.SeekByEntryIndex( index );
 
-            if (extra == -1)
+            if ( extra == -1 )
             {
                 width = 0;
                 height = 0;
@@ -182,38 +167,38 @@ namespace ClassicUO.IO.Resources
                 return null;
             }
 
-            width = (extra >> 16) & 0xFFFF;
+            width = ( extra >> 16 ) & 0xFFFF;
             height = extra & 0xFFFF;
 
-            if (width == 0 || height == 0)
+            if ( width == 0 || height == 0 )
                 return null;
 
-            //width = PaddedRowWidth(16, width, 4) / 2;
+            width = PaddedRowWidth(16, width, 4) / 2;
             IntPtr dataStart = _file.PositionAddress;
             ushort[] pixels = new ushort[width * height];
-            int* lookuplist = (int*) dataStart;
+            int* lookuplist = (int*)dataStart;
 
-            for (int y = 0; y < height; y++)
+            for ( int y = 0; y < height; y++ )
             {
                 int gsize = 0;
 
-                if (y < height - 1)
+                if ( y < height - 1 )
                     gsize = lookuplist[y + 1] - lookuplist[y];
                 else
                     gsize = length / 4 - lookuplist[y];
-                GumpBlock* gmul = (GumpBlock*) (dataStart + lookuplist[y] * 4);
+                GumpBlock* gmul = (GumpBlock*)( dataStart + lookuplist[y] * 4 );
                 int pos = y * width;
                 int x = 0;
 
-                for (int i = 0; i < gsize; i++)
+                for ( int i = 0; i < gsize; i++ )
                 {
                     ushort val = gmul[i].Value;
                     int count = gmul[i].Run;
 
-                    if (val > 0)
+                    if ( val > 0 )
                     {
-                        for (int j = 0; j < count; j++)
-                            pixels[pos + x++] = (ushort) (0x8000 | val);
+                        for ( int j = 0; j < count; j++ )
+                            pixels[pos + x++] = (ushort)( 0x8000 | val );
                     }
                     else
                         x += count;

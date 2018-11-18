@@ -98,7 +98,7 @@ namespace ClassicUO.Renderer
 
         public void EnableLight(bool value)
         {
-            _drawLightingEffect.SetValue(value);
+           // _drawLightingEffect.SetValue(value);
         }
 
 #if !ORIONSORT
@@ -128,6 +128,7 @@ namespace ClassicUO.Renderer
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe bool DrawSprite(Texture2D texture, SpriteVertex[] vertices, Techniques technique = Techniques.Default, Rectangle? scissorRectangle = null)
         {
+
             if (texture == null || texture.IsDisposed)
                 return false;
             bool draw = false;
@@ -145,7 +146,8 @@ namespace ClassicUO.Renderer
             if (!draw)
                 return false;
             SpriteBatch b = new SpriteBatch( GraphicsDevice );
-            b.Draw( texture, new Vector2( vertices[0].Pos.x, vertices[0].Pos.y), Color.White );
+            //b.Draw( texture, new Rectangle( (int)vertices[0].Pos.x, (int)vertices[0].Pos.y, (int)( vertices[3].Pos.x - vertices[0].Pos.x ), (int)( vertices[3].Pos.y - vertices[0].Pos.y ) ), Color.White );
+            b.Draw( texture, new Vector2(vertices[0].Pos.x, vertices[0].Pos.y ), Color.White );
             return true;
             if (_numSprites >= MAX_SPRITES)
                 Flush();
