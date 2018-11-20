@@ -42,11 +42,12 @@ namespace Microsoft.Xna.Framework.Graphics
         }*/
         internal void SetRenderTarget( RenderTarget2D renderTarget )
         {
-            var cam = GameObject.FindWithTag( "MainCamera" ).GetComponent<Camera>();
+            XNATest.Draw.Enqueue( new XNATest.SetRenderTextureDrawCall( renderTarget ) );
+            /*var cam = GameObject.FindWithTag( "MainCamera" ).GetComponent<Camera>();
             if(renderTarget == null)
                 cam.Render();
             cam.targetTexture = renderTarget;
-            
+            */
 
 
         }
@@ -64,7 +65,7 @@ namespace Microsoft.Xna.Framework.Graphics
             Viewport = viewport;
         }
 
-        public GraphicsDevice22( DrawQueue drawQueue )
+        public GraphicsDevice22(  )
         {
         }
 
@@ -85,6 +86,14 @@ namespace Microsoft.Xna.Framework.Graphics
                
                // _matrix = _baseMatrix * value;
             }
+        }
+        public MeshHolder GetMesh(int primCCount)
+        {
+            return _meshPool.Get( primCCount );
+        }
+        public Material GetMat(Texture2D text)
+        {
+            return _materialPool.Get( text );
         }
 
         private readonly MaterialPool _materialPool = new MaterialPool();
@@ -139,12 +148,13 @@ namespace Microsoft.Xna.Framework.Graphics
 
             private readonly List<MaterialHolder> _materials = new List<MaterialHolder>();
             private int _index;
-            private readonly Shader _shader = Shader.Find( "Custom/SpriteShader" );
+            private readonly Shader _shader = Shader.Find( "Unlit/HueShader" );
 
             private MaterialHolder Create( Texture2D texture )
             {
                 var mat = new Material( _shader );
                 mat.mainTexture = texture.UnityTexture;
+                mat.SetTexture( "_HueTex", XNATest.HueTexture.UnityTexture );
                 mat.renderQueue += _materials.Count;
                 return new MaterialHolder( mat, texture );
             }
@@ -174,7 +184,7 @@ namespace Microsoft.Xna.Framework.Graphics
             }
         }
 
-        private class MeshHolder
+        public class MeshHolder
         {
             public readonly int SpriteCount;
             public readonly Mesh Mesh;
@@ -232,6 +242,29 @@ namespace Microsoft.Xna.Framework.Graphics
                 Mesh.colors32 = Colors;
                 Mesh.triangles = triangles;
             }
+            
+
+                 public void Populate( ClassicUO.Renderer.SpriteVertex[] vertexData, int numVertices )
+            {
+                for ( int i = 0; i < numVertices; i++ )
+                {
+                    var p = vertexData[i].Position;
+                    Vertices[i] = new UnityEngine.Vector3( p.X, p.Y, p.Z );
+
+                    var uv = vertexData[i].TextureCoordinate;
+                    UVs[i] = new UnityEngine.Vector2( uv.X, 1 - uv.Y );
+
+                    var c = vertexData[i].Normal;
+                   // Colors[i] = new Color32( c.R, c.G, c.B, c.A );
+                }
+                //we could clearly less if we remembered how many we used last time
+               // Array.Clear( Vertices, numVertices, Vertices.Length - numVertices );
+
+                Mesh.vertices = Vertices;
+                Mesh.uv = UVs;
+                //Mesh.colors32 = Colors;
+            }
+
 
             public void Populate( VertexPositionColorTexture[] vertexData, int numVertices )
             {

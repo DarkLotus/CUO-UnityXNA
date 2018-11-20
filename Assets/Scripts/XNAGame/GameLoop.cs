@@ -85,8 +85,9 @@ namespace ClassicUO
             uint[] hues = Hues.CreateShaderColors();
             Texture2D texture0 = new Texture2D(GraphicsDevice, 32, Hues.HuesCount);
             texture0.SetData(hues, 0, 32 * Hues.HuesCount);
-            Texture2D texture1 = new Texture2D(GraphicsDevice, 32, Hues.HuesCount);
-            texture1.SetData(hues, 32 * Hues.HuesCount, 32 * Hues.HuesCount);
+            XNATest.HueTexture = texture0;
+            //Texture2D texture1 = new Texture2D(GraphicsDevice, 32, Hues.HuesCount);
+           // texture1.SetData(hues, 32 * Hues.HuesCount, 32 * Hues.HuesCount);
             //GraphicsDevice.Textures[1] = texture0;
             //GraphicsDevice.Textures[2] = texture1;
             Log.Message(LogTypes.Trace, $"Files loaded in: {stopwatch.ElapsedMilliseconds} ms!");

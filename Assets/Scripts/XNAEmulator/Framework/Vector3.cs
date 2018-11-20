@@ -173,6 +173,11 @@ namespace Microsoft.Xna.Framework
             result.Z = value1.Z + value2.Z;
         }
 
+        internal UnityEngine.Vector3 ToVec3()
+        {
+            return new UnityEngine.Vector3( X, Y, Z );
+        }
+
         public static Vector3 Barycentric(Vector3 value1, Vector3 value2, Vector3 value3, float amount1, float amount2)
         {
             return new Vector3(

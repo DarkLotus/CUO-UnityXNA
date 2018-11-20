@@ -24,7 +24,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
         }
         public Rectangle Bounds => new Rectangle(0, 0, Width, Height);
-        public UnityEngine.RenderTexture RenderTexture => unityTexture as UnityEngine.RenderTexture;
+        //public UnityEngine.RenderTexture RenderTexture => unityTexture as UnityEngine.RenderTexture;
 
         public Texture2D(UnityEngine.Texture2D unityTexture)
         {
@@ -69,27 +69,54 @@ namespace Microsoft.Xna.Framework.Graphics
 
         internal unsafe void SetData<T>( T[] data, int startIndex, int elementCount ) where T : struct
         {
-            if(typeof(T) != typeof(ushort) )
+            int sizeMulti = 2;
+
+            if(typeof(T) == typeof(ushort) )
             {
-                return;
+                sizeMulti = 2;
+                var bmp = new Bitmap( Width, Height, PixelFormat.Format16bppArgb1555 );
+                BitmapData bd = bmp.LockBits(
+                    new System.Drawing.Rectangle( 0, 0, Width, Height ), ImageLockMode.WriteOnly, PixelFormat.Format16bppArgb1555 );
+                byte[] buf = new byte[elementCount * sizeMulti];
+                Buffer.BlockCopy( data, 0, buf, 0, buf.Length );
+                Marshal.Copy( buf, 0, bd.Scan0, buf.Length );
+                bmp.UnlockBits( bd );
+
+                byte[] result = null;
+                using ( MemoryStream stream = new MemoryStream() )
+                {
+                    bmp.Save( stream, ImageFormat.Png );
+                    result = stream.ToArray();
+                }
+
+                UnityEngine.ImageConversion.LoadImage( UnityTexture as UnityEngine.Texture2D, result );
+            }
+            else if ( typeof( T ) == typeof( uint ) )
+            {
+                sizeMulti = 4;
+                var bmp = new Bitmap( Width, Height, PixelFormat.Format32bppArgb );
+                BitmapData bd = bmp.LockBits(
+                    new System.Drawing.Rectangle( 0, 0, Width, Height ), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb );
+                byte[] buf = new byte[elementCount * sizeMulti];
+                Buffer.BlockCopy( data, 0, buf, 0, buf.Length );
+                Marshal.Copy( buf, 0, bd.Scan0, buf.Length );
+                bmp.UnlockBits( bd );
+
+                byte[] result = null;
+                using ( MemoryStream stream = new MemoryStream() )
+                {
+                    bmp.Save( stream, ImageFormat.Png );
+                    result = stream.ToArray();
+                }
+
+                UnityEngine.ImageConversion.LoadImage( UnityTexture as UnityEngine.Texture2D, result );
+            }
+            else
+            {
+                throw new Exception( "Not supported " + data.GetType() );
             }
 
-            var bmp = new Bitmap( Width,Height, PixelFormat.Format16bppArgb1555 );
-            BitmapData bd = bmp.LockBits(
-                new System.Drawing.Rectangle( 0, 0, Width, Height ), ImageLockMode.WriteOnly, PixelFormat.Format16bppArgb1555 );
-            byte[] buf = new byte[elementCount * 2];
-            Buffer.BlockCopy( data, 0, buf, 0, buf.Length );
-            Marshal.Copy( buf, 0, bd.Scan0, buf.Length );
-            bmp.UnlockBits( bd );
 
-            byte[] result = null;
-            using ( MemoryStream stream = new MemoryStream() )
-            {
-                bmp.Save( stream, ImageFormat.Png );
-                result = stream.ToArray();
-            }
-
-            UnityEngine.ImageConversion.LoadImage( UnityTexture as UnityEngine.Texture2D, result );
             return;
 
             UnityEngine.Color[] cols = new UnityEngine.Color[elementCount];

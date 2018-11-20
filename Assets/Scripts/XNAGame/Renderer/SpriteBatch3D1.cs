@@ -145,9 +145,18 @@ namespace ClassicUO.Renderer
 
             if (!draw)
                 return false;
-            SpriteBatch b = new SpriteBatch( GraphicsDevice );
+            XNATest.Draw.Enqueue( new XNATest.MeshDrawCall(texture,vertices)
+            {
+               
+            } );
+            /* XNATest.Draw.Enqueue( new XNATest.StandardDrawCall() { Texture = texture.UnityTexture,
+                 ScreenRect = new UnityEngine.Rect( vertices[0].Pos, vertices[3].Pos - vertices[0].Pos ),
+                  SourceRect = new UnityEngine.Rect(vertices[0].TextureCoordinate.X,vertices[0].TextureCoordinate.Y, vertices[3].TextureCoordinate.X, vertices[3].TextureCoordinate.Y )
+               } );*/
+
+            // SpriteBatch b = new SpriteBatch( GraphicsDevice );
             //b.Draw( texture, new Rectangle( (int)vertices[0].Pos.x, (int)vertices[0].Pos.y, (int)( vertices[3].Pos.x - vertices[0].Pos.x ), (int)( vertices[3].Pos.y - vertices[0].Pos.y ) ), Color.White );
-            b.Draw( texture, new Vector2(vertices[0].Pos.x, vertices[0].Pos.y ), Color.White );
+            //b.Draw( texture, new Vector2(vertices[0].Pos.x, vertices[0].Pos.y ), Color.White );
             return true;
             if (_numSprites >= MAX_SPRITES)
                 Flush();
@@ -176,7 +185,7 @@ namespace ClassicUO.Renderer
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void DrawShadow(Texture2D texture, SpriteVertex[] vertices, Vector2 position, bool flip, float z)
         {
-            return;
+
             if (texture == null || texture.IsDisposed)
                 return;
 

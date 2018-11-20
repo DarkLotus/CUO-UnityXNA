@@ -1434,7 +1434,8 @@ namespace ClassicUO.IO.Resources
             }
 
             ftexture = new FontTexture(width, height, linesCount, links);
-            fixed (uint* ptrData = pData) ftexture.SetDataPointerEXT(0, ftexture.Bounds, (IntPtr) ptrData, pData.Length);
+            ftexture.SetData( pData );
+            //fixed (uint* ptrData = pData) ftexture.SetDataPointerEXT(0, ftexture.Bounds, (IntPtr) ptrData, pData.Length);
         }
 
         private static unsafe MultilinesFontInfo GetInfoHTML(byte font, string str, int len, TEXT_ALIGN_TYPE align, ushort flags, int width)

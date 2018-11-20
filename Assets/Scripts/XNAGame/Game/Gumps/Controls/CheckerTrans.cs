@@ -53,10 +53,10 @@ namespace ClassicUO.Game.Gumps.Controls
                 {
                     _transparentTexture = new SpriteTexture(1, 1);
 
-                    _transparentTexture.SetData(new Color[1]
+                    _transparentTexture.SetData(new uint[1]
                     {
-                        Color.Black
-                    });
+                        ((uint)255 << 24) + ((uint)0 << 16) + ((uint)0 << 8) + 0
+                    } );
                 }
 
                 _transparentTexture.Ticks = CoreGame.Ticks;

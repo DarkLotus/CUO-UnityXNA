@@ -71,8 +71,13 @@ namespace ClassicUO.Renderer
             _vertexBufferUI[3].TextureCoordinate.Y = 1;
             _vertexBufferUI[3].TextureCoordinate.Z = 0;
             _vertexBufferUI[0].Hue = _vertexBufferUI[1].Hue = _vertexBufferUI[2].Hue = _vertexBufferUI[3].Hue = hue;
+            XNATest.Draw.Enqueue( new XNATest.MeshDrawCall( texture, _vertexBufferUI )
+            {
 
-            return DrawSprite(texture, _vertexBufferUI, Techniques.Hued, scissorRectangle);
+            } );
+            //XNATest.Draw.Enqueue( new XNATest.StandardDrawCall() { Texture = texture.UnityTexture, ScreenRect = new UnityEngine.Rect( position.X, position.Y, texture.Width, texture.Height ) } );
+            return true;
+            //return DrawSprite(texture, _vertexBufferUI, Techniques.Hued, scissorRectangle);
         }
 
         public bool Draw2D(Texture2D texture, Vector3 position, Rectangle sourceRect, Vector3 hue, Rectangle? scissorRectangle = null)
@@ -118,9 +123,14 @@ namespace ClassicUO.Renderer
             _vertexBufferUI[3].TextureCoordinate.Y = maxY;
             _vertexBufferUI[3].TextureCoordinate.Z = 0;
             _vertexBufferUI[0].Hue = _vertexBufferUI[1].Hue = _vertexBufferUI[2].Hue = _vertexBufferUI[3].Hue = hue;
+            XNATest.Draw.Enqueue( new XNATest.MeshDrawCall( texture, _vertexBufferUI )
+            {
 
-            SpriteBatch b = new SpriteBatch( GraphicsDevice );
-            b.Draw( texture, new Vector2(position.X,position.Y), sourceRect, Color.White );
+            } );
+           // XNATest.Draw.Enqueue( new XNATest.StandardDrawCall() { Texture = texture.UnityTexture, ScreenRect = new UnityEngine.Rect( position.X, position.Y, sourceRect.Width, sourceRect.Height ), SourceRect = new UnityEngine.Rect(minX,minY,minX+maxX, minY+maxY) } );
+
+            //SpriteBatch b = new SpriteBatch( GraphicsDevice );
+            //b.Draw( texture, new Vector2(position.X,position.Y), sourceRect, Color.White );
             return true;
             return DrawSprite(texture, _vertexBufferUI, Techniques.Hued, scissorRectangle);
         }
@@ -166,8 +176,14 @@ namespace ClassicUO.Renderer
             _vertexBufferUI[3].TextureCoordinate.Y = maxY;
             _vertexBufferUI[3].TextureCoordinate.Z = 0;
             _vertexBufferUI[0].Hue = _vertexBufferUI[1].Hue = _vertexBufferUI[2].Hue = _vertexBufferUI[3].Hue = hue;
-            SpriteBatch b = new SpriteBatch( GraphicsDevice );
-            b.Draw( texture, new Vector2( destRect.X, destRect.Y ), sourceRect, Color.White );
+            XNATest.Draw.Enqueue( new XNATest.MeshDrawCall( texture, _vertexBufferUI )
+            {
+
+            } ); //XNATest.Draw.Enqueue( new XNATest.StandardDrawCall() { Texture = texture.UnityTexture, ScreenRect = new UnityEngine.Rect( destRect.X, destRect.Y, destRect.Width, destRect.Height ), SourceRect = new UnityEngine.Rect( minX, minY, minX + maxX, minY + maxY ) } );
+
+
+//            SpriteBatch b = new SpriteBatch( GraphicsDevice );
+  //          b.Draw( texture, new Vector2( destRect.X, destRect.Y ), sourceRect, Color.White );
             return true;
             return DrawSprite(texture, _vertexBufferUI, Techniques.Hued, scissorRectangle);
         }
@@ -209,7 +225,11 @@ namespace ClassicUO.Renderer
             _vertexBufferUI[3].TextureCoordinate.Y = 1;
             _vertexBufferUI[3].TextureCoordinate.Z = 0;
             _vertexBufferUI[0].Hue = _vertexBufferUI[1].Hue = _vertexBufferUI[2].Hue = _vertexBufferUI[3].Hue = hue;
-            return DrawSprite(texture, _vertexBufferUI, Techniques.Hued, scissorRectangle);
+
+            XNATest.Draw.Enqueue( new XNATest.StandardDrawCall() { Texture = texture.UnityTexture, ScreenRect = new UnityEngine.Rect( destRect.X, destRect.Y, destRect.Width, destRect.Height ) } );
+            return true;
+
+            //return DrawSprite(texture, _vertexBufferUI, Techniques.Hued, scissorRectangle);
         }
 
         public bool Draw2DTiled(Texture2D texture, Rectangle destRect, Vector3 hue, Rectangle? scissorRectangle = null)
@@ -274,8 +294,9 @@ namespace ClassicUO.Renderer
             _vertexBufferUI[3].Normal = new Vector3(0, 0, 1);
             _vertexBufferUI[3].TextureCoordinate = new Vector3(1, 1, 0);
             _vertexBufferUI[0].Hue = _vertexBufferUI[1].Hue = _vertexBufferUI[2].Hue = _vertexBufferUI[3].Hue = hue;
+            XNATest.Draw.Enqueue( new XNATest.StandardDrawCall() { Texture = texture.UnityTexture, ScreenRect = new UnityEngine.Rect( start.X, start.Y, start.X + end.X, start.Y + end.Y ) } );
 
-            return DrawSprite(texture, _vertexBufferUI);
+            return true;// return DrawSprite(texture, _vertexBufferUI);
         }
     }
 }

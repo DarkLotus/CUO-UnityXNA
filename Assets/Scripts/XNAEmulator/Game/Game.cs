@@ -118,9 +118,17 @@ namespace Microsoft.Xna.Framework
             totalTicks += ticks;
             GameTime gameTime = new GameTime(new TimeSpan(0), new TimeSpan(0), new TimeSpan(totalTicks), new TimeSpan(ticks));
             Update(gameTime);
-            Draw(gameTime);
         }
 
-       
+        public void DrawUnity(float delta)
+        {
+            long microseconds = (int)( delta * 1000000 );
+            long ticks = microseconds * 10;
+            GameTime gameTime = new GameTime( new TimeSpan( 0 ), new TimeSpan( 0 ), new TimeSpan( totalTicks ), new TimeSpan( ticks ) );
+            Draw( gameTime );
+
+        }
+
+
     }
 }
