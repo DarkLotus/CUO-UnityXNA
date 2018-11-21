@@ -58,8 +58,9 @@ namespace ClassicUO.Game.Views
                 else
                 {
                     Texture = Art.GetLandTexture(GameObject.Graphic);
-                    Bounds = new Rectangle(0, 0, 44, 44);
+                   // Bounds = new Rectangle(0, 0, 44, 44);
                 }
+                Bounds = new Rectangle( 0, 0, Texture.Width, Texture.Height );
             }
 
             if (tile.IsStretched)

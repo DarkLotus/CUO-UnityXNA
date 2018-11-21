@@ -225,8 +225,11 @@ namespace ClassicUO.Renderer
             _vertexBufferUI[3].TextureCoordinate.Y = 1;
             _vertexBufferUI[3].TextureCoordinate.Z = 0;
             _vertexBufferUI[0].Hue = _vertexBufferUI[1].Hue = _vertexBufferUI[2].Hue = _vertexBufferUI[3].Hue = hue;
+            XNATest.Draw.Enqueue( new XNATest.MeshDrawCall( texture, _vertexBufferUI )
+            {
 
-            XNATest.Draw.Enqueue( new XNATest.StandardDrawCall() { Texture = texture.UnityTexture, ScreenRect = new UnityEngine.Rect( destRect.X, destRect.Y, destRect.Width, destRect.Height ) } );
+            } );
+            //XNATest.Draw.Enqueue( new XNATest.StandardDrawCall() { Texture = texture.UnityTexture, ScreenRect = new UnityEngine.Rect( destRect.X, destRect.Y, destRect.Width, destRect.Height ) } );
             return true;
 
             //return DrawSprite(texture, _vertexBufferUI, Techniques.Hued, scissorRectangle);

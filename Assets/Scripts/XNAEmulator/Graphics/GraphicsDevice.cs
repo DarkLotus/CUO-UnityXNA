@@ -196,7 +196,7 @@ namespace Microsoft.Xna.Framework.Graphics
             public MeshHolder( int spriteCount )
             {
                 Mesh = new Mesh();
-                //Mesh.MarkDynamic(); //Seems to be a win on wp8
+                Mesh.MarkDynamic(); //Seems to be a win on wp8
 
                 SpriteCount = NextPowerOf2( spriteCount );
                 int vCount = SpriteCount * 4;
@@ -252,13 +252,13 @@ namespace Microsoft.Xna.Framework.Graphics
                     Vertices[i] = new UnityEngine.Vector3( p.X, p.Y, p.Z );
 
                     var uv = vertexData[i].TextureCoordinate;
-                    UVs[i] = new UnityEngine.Vector2( uv.X, 1 - uv.Y );
+                    UVs[i] = new UnityEngine.Vector2( uv.X, /*1 - */uv.Y );
 
                     var c = vertexData[i].Normal;
                    // Colors[i] = new Color32( c.R, c.G, c.B, c.A );
                 }
                 //we could clearly less if we remembered how many we used last time
-               // Array.Clear( Vertices, numVertices, Vertices.Length - numVertices );
+                Array.Clear( Vertices, numVertices, Vertices.Length - numVertices );
 
                 Mesh.vertices = Vertices;
                 Mesh.uv = UVs;

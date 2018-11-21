@@ -47,7 +47,9 @@
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 				//o.hue = v.hue;
-                UNITY_TRANSFER_FOG(o,o.vertex);
+               // UNITY_TRANSFER_FOG(o,o.vertex);
+				//o.vertex.x -= 0.5 / 1920;
+				//o.vertex.y -= 0.5 / 1080;
                 return o;
             }
 

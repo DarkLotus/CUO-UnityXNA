@@ -145,11 +145,13 @@ namespace ClassicUO.Renderer
 
             if (!draw)
                 return false;
+            //if(texture.Width == 44 && texture.Height == 44 && vertices[0].Hue == Vector3.Zero && technique == Techniques.Default)
             XNATest.Draw.Enqueue( new XNATest.MeshDrawCall(texture,vertices)
             {
                
             } );
-            /* XNATest.Draw.Enqueue( new XNATest.StandardDrawCall() { Texture = texture.UnityTexture,
+            /*else
+             XNATest.Draw.Enqueue( new XNATest.StandardDrawCall() { Texture = texture.UnityTexture,
                  ScreenRect = new UnityEngine.Rect( vertices[0].Pos, vertices[3].Pos - vertices[0].Pos ),
                   SourceRect = new UnityEngine.Rect(vertices[0].TextureCoordinate.X,vertices[0].TextureCoordinate.Y, vertices[3].TextureCoordinate.X, vertices[3].TextureCoordinate.Y )
                } );*/
