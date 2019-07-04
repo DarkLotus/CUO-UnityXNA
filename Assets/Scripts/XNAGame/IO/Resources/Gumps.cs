@@ -24,7 +24,6 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -42,6 +41,9 @@ namespace ClassicUO.IO.Resources
 
         public static void Load()
         {
+            _file = new UOFileMul( "Gumpart.mul", "Gumpidx.mul", GUMP_COUNT, 12 );
+            FileManager.UseUOPGumps = false;
+
             string path = Path.Combine(FileManager.UoFolderPath, "gumpartLegacyMUL.uop");
 
             if (File.Exists(path))
@@ -51,9 +53,10 @@ namespace ClassicUO.IO.Resources
             }
             else
             {
-                path = Path.Combine(FileManager.UoFolderPath, "Gumpart.mul");
-                string pathidx = Path.Combine(FileManager.UoFolderPath, "Gumpidx.mul");
-                if (File.Exists(path) && File.Exists(pathidx)) _file = new UOFileMul(path, pathidx, GUMP_COUNT, 12);
+                 path = Path.Combine(FileManager.UoFolderPath, "Gumpart.mul");
+                 string pathidx = Path.Combine(FileManager.UoFolderPath, "Gumpidx.mul");
+                 if (File.Exists(path) && File.Exists(pathidx)) _file = new UOFileMul(path, pathidx, GUMP_COUNT, 12);
+                
                 FileManager.UseUOPGumps = false;
             }
 

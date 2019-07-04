@@ -28,6 +28,7 @@ using System.Runtime.InteropServices;
 
 using ClassicUO.IO.Resources;
 using ClassicUO.Utility.Logging;
+using UnityEngine;
 
 namespace ClassicUO.IO
 {
@@ -46,6 +47,17 @@ namespace ClassicUO.IO
 
         protected virtual void Load(bool loadentries = true)
         {
+            if(!Path.Contains("/") && !Path.Contains( "\\" ) )
+            {
+               // string fileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension( Path );
+                TextAsset textAsset = UnityEngine.Resources.Load( Path ) as TextAsset;
+                Stream stream = new MemoryStream( textAsset.bytes );
+                fixed (byte* ptr = textAsset.bytes)
+                {
+                    SetData( ptr, (long)textAsset.bytes.LongLength );
+                }
+                return;
+            }
             Log.Message(LogTypes.Trace, $"Loading file:\t\t{Path}");
             FileInfo fileInfo = new FileInfo(Path);
 

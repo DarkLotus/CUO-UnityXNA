@@ -66,19 +66,49 @@ namespace Microsoft.Xna.Framework.Graphics
             //TODO
             SetData<T>( data, 0, data.Length );
         }
+        public static int u16Tou32( ushort color )
+        {
+            Int32 red = (Int32)( ( ( color >> 0xA ) & 0x1F ) * 8.225806f );
+            Int32 green = (Int32)( ( ( color >> 0x5 ) & 0x1F ) * 8.225806f );
+            Int32 blue = (Int32)( ( color & 0x1F ) * 8.225806f );
 
+            if ( red < 0 )
+                red = 0;
+            else if ( red > 0xFF )
+                red = 0xFF;
+
+            if ( green < 0 )
+                green = 0;
+            else if ( green > 0xFF )
+                green = 255;
+
+            if ( blue < 0 )
+                blue = 0;
+            else if ( blue > 0xFF )
+                blue = 0xFF;
+
+            return ( ( red << 0x10 ) | ( green << 0x8 ) | blue );
+        }
         internal unsafe void SetData<T>( T[] data, int startIndex, int elementCount ) where T : struct
         {
             int sizeMulti = 2;
 
             if(typeof(T) == typeof(ushort) )
             {
-                sizeMulti = 2;
-                var bmp = new Bitmap( Width, Height, PixelFormat.Format16bppArgb1555 );
+                sizeMulti = 4;
+                var bmp = new Bitmap( Width, Height, PixelFormat.Format32bppRgb );
                 BitmapData bd = bmp.LockBits(
-                    new System.Drawing.Rectangle( 0, 0, Width, Height ), ImageLockMode.WriteOnly, PixelFormat.Format16bppArgb1555 );
+                    new System.Drawing.Rectangle( 0, 0, Width, Height ), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb );
+                int[] temp = new int[elementCount];
+
+                for (int i = 0; i < temp.Length; i++)
+                {
+                    temp[i] = u16Tou32(Convert.ToUInt16(data[i]));
+                }
+                
                 byte[] buf = new byte[elementCount * sizeMulti];
-                Buffer.BlockCopy( data, 0, buf, 0, buf.Length );
+               
+                Buffer.BlockCopy( temp, 0, buf, 0, buf.Length );
                 Marshal.Copy( buf, 0, bd.Scan0, buf.Length );
                 bmp.UnlockBits( bd );
 
@@ -115,15 +145,20 @@ namespace Microsoft.Xna.Framework.Graphics
             {
                 throw new Exception( "Not supported " + data.GetType() );
             }
-
+            
 
             return;
 
-            UnityEngine.Color[] cols = new UnityEngine.Color[elementCount];
+            /*UnityEngine.Color[] cols = new UnityEngine.Color[elementCount];
 
             for ( int i = 0; i < elementCount; i++ )
             {
-                ushort col = Convert.ToUInt16(data[i]);
+                if (typeof(T) == typeof(uint))
+                {
+                    Console.WriteLine("was uint");
+                }
+
+                ushort col = (ushort)Convert.ToUInt32(data[i]);//Convert.ToUInt16(data[i]);
                 if(col > 0)
                 {
                     int xxxx = 0;
@@ -139,15 +174,17 @@ namespace Microsoft.Xna.Framework.Graphics
                 cols[i] = new UnityEngine.Color( (byte)red, (byte)green, (byte)blue, 255 );
             }
 
-             /*var dst = UnityTexture.GetRawTextureData<UnityEngine.Color>();
+            var destText = UnityTexture as UnityEngine.Texture2D;
+            
+             var dst = destText.GetRawTextureData<UnityEngine.Color>();
             for ( int i = 0; i < elementCount; i++ )
                 if(i < cols.Length && i < dst.Length)
                     dst[i] = cols[i];
             else
                 {
-                    Console.Write( "a" );
+                    Console.Write( "fail??" );
                 }
-            UnityTexture.Apply();*/
+            destText.Apply();*/
             //TODO
         }
         }
