@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using UnityEngine;
 
 namespace Microsoft.Xna.Framework.Graphics
 {
@@ -68,10 +68,17 @@ namespace Microsoft.Xna.Framework.Graphics
         }
         public static int u16Tou32( ushort color )
         {
-            Int32 red = (Int32)( ( ( color >> 0xA ) & 0x1F ) * 8.225806f );
-            Int32 green = (Int32)( ( ( color >> 0x5 ) & 0x1F ) * 8.225806f );
-            Int32 blue = (Int32)( ( color & 0x1F ) * 8.225806f );
-
+            //Bgra5551
+            if (color == 0)
+                return 0;
+            byte alpha = (byte) ((color >> 15) * 255);
+            byte red = (byte)( ( ( color >> 0xA ) & 0x1F ) * 8.225806f );
+            byte green = (byte)( ( ( color >> 0x5 ) & 0x1F ) * 8.225806f );
+            byte blue = (byte)( ( (color >> 0) & 0x1F ) * 8.225806f );
+            var ret = new byte[] {alpha, red, green, blue};
+            return BitConverter.ToInt32(ret,0);
+            var res = ( ( red << 16 ) | ( green << 8 ) | blue );
+            return res;
             if ( red < 0 )
                 red = 0;
             else if ( red > 0xFF )
@@ -80,12 +87,14 @@ namespace Microsoft.Xna.Framework.Graphics
             if ( green < 0 )
                 green = 0;
             else if ( green > 0xFF )
-                green = 255;
+                green = 0xFF;
 
             if ( blue < 0 )
                 blue = 0;
             else if ( blue > 0xFF )
                 blue = 0xFF;
+
+            return ( ( red << 16 ) | ( green << 8 ) | blue << 0 );
 
             return ( ( red << 0x10 ) | ( green << 0x8 ) | blue );
         }
@@ -95,51 +104,108 @@ namespace Microsoft.Xna.Framework.Graphics
 
             if(typeof(T) == typeof(ushort) )
             {
-                sizeMulti = 4;
-                var bmp = new Bitmap( Width, Height, PixelFormat.Format32bppRgb );
-                BitmapData bd = bmp.LockBits(
-                    new System.Drawing.Rectangle( 0, 0, Width, Height ), ImageLockMode.WriteOnly, PixelFormat.Format32bppRgb );
-                int[] temp = new int[elementCount];
+                UnityTexture = new UnityEngine.Texture2D( UnityTexture.width, UnityTexture.height,TextureFormat.ARGB32,false);
 
-                for (int i = 0; i < temp.Length; i++)
+                sizeMulti = 4;
+                uint[] temp = new uint[elementCount];
+
+                for (int i = 0; i < elementCount; i++)
                 {
-                    temp[i] = u16Tou32(Convert.ToUInt16(data[i]));
+                    temp[i] = (uint)u16Tou32(Convert.ToUInt16(data[i]));
                 }
                 
                 byte[] buf = new byte[elementCount * sizeMulti];
                
                 Buffer.BlockCopy( temp, 0, buf, 0, buf.Length );
-                Marshal.Copy( buf, 0, bd.Scan0, buf.Length );
-                bmp.UnlockBits( bd );
+                
+                var destText = UnityTexture as UnityEngine.Texture2D;
+                var dst = destText.GetRawTextureData<uint>();
 
-                byte[] result = null;
-                using ( MemoryStream stream = new MemoryStream() )
+                //if(dst.Length == temp.Length)
+                //    destText.LoadRawTextureData(buf);
+               /* else
                 {
-                    bmp.Save( stream, ImageFormat.Png );
-                    result = stream.ToArray();
-                }
-
-                UnityEngine.ImageConversion.LoadImage( UnityTexture as UnityEngine.Texture2D, result );
+                    for ( int i = 0; i < elementCount; i++ )
+                        if(i < temp.Length && i < dst.Length)
+                            dst[i] = data[i];
+                        else
+                        {
+                            Console.Write( "fail??" );
+                        }
+                    
+                }*/
+               
+              
+               for(int i = 0; i < temp.Length / 2; i++) {
+                   var tt = temp[i];
+                   temp[i] = temp[temp.Length - i - 1];
+                   temp[temp.Length - i - 1] = tt;
+               }
+               {
+                   for (int i = 0; i < elementCount; i++)
+                   {
+                       int x = i % UnityTexture.width;
+                       int y = i / UnityTexture.width;
+                       y *= UnityTexture.width;
+                       var index = y + (UnityTexture.width - x);
+                       if(index < temp.Length && i < dst.Length)
+                           dst[i] = temp[index];
+                       else
+                       {
+                           Console.Write( "fail??" );
+                       }
+                   }
+                        
+                    
+               }
+               
+               
+               
+               
+                destText.Apply();
+                
+              
             }
             else if ( typeof( T ) == typeof( uint ) )
             {
                 sizeMulti = 4;
-                var bmp = new Bitmap( Width, Height, PixelFormat.Format32bppArgb );
-                BitmapData bd = bmp.LockBits(
-                    new System.Drawing.Rectangle( 0, 0, Width, Height ), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb );
+                UnityTexture = new UnityEngine.Texture2D( UnityTexture.width, UnityTexture.height,TextureFormat.ARGB32,false);
+
                 byte[] buf = new byte[elementCount * sizeMulti];
                 Buffer.BlockCopy( data, 0, buf, 0, buf.Length );
-                Marshal.Copy( buf, 0, bd.Scan0, buf.Length );
-                bmp.UnlockBits( bd );
-
-                byte[] result = null;
-                using ( MemoryStream stream = new MemoryStream() )
+                var destText = UnityTexture as UnityEngine.Texture2D;
+                
+                
+                for(int i = 0; i < data.Length / 2; i++) {
+                    var temp = data[i];
+                    data[i] = data[data.Length - i - 1];
+                    data[data.Length - i - 1] = temp;
+                }
+               
+            
+                var dst = destText.GetRawTextureData<T>();
+                /*if(dst.Length == buf.Length)
+                    destText.LoadRawTextureData(buf);
+                else*/
                 {
-                    bmp.Save( stream, ImageFormat.Png );
-                    result = stream.ToArray();
+                    for (int i = 0; i < elementCount; i++)
+                    {
+                        int x = i % UnityTexture.width;
+                        int y = i / UnityTexture.width;
+                        y *= UnityTexture.width;
+                        var index = y + (UnityTexture.width - x);
+                        if(index < data.Length && i < dst.Length)
+                            dst[i] = data[index];
+                        else
+                        {
+                            Console.Write( "fail??" );
+                        }
+                    }
+                        
+                    
                 }
 
-                UnityEngine.ImageConversion.LoadImage( UnityTexture as UnityEngine.Texture2D, result );
+                destText.Apply();
             }
             else
             {
