@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -25,7 +25,7 @@ using static SDL2.SDL;
 
 namespace ClassicUO.Input
 {
-    public class InputEvent
+    internal class InputEvent
     {
         public InputEvent(SDL_Keymod modifiers)
         {
@@ -41,10 +41,10 @@ namespace ClassicUO.Input
 
         public bool IsHandled { get; set; }
 
-        public bool Alt => (Mod & SDL_Keymod.KMOD_LALT) == SDL_Keymod.KMOD_LALT;
+        public bool Alt => (Mod & SDL_Keymod.KMOD_ALT) != SDL_Keymod.KMOD_NONE;
 
-        public bool Control => (Mod & SDL_Keymod.KMOD_LCTRL) == SDL_Keymod.KMOD_LCTRL;
+        public bool Control => (Mod & SDL_Keymod.KMOD_CTRL) != SDL_Keymod.KMOD_NONE;
 
-        public bool Shift => (Mod & SDL_Keymod.KMOD_LSHIFT) == SDL_Keymod.KMOD_LSHIFT;
+        public bool Shift => (Mod & SDL_Keymod.KMOD_SHIFT) != SDL_Keymod.KMOD_NONE;
     }
 }

@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -25,9 +25,9 @@ using System;
 
 namespace ClassicUO.Game
 {
-    public struct Position
+    internal readonly struct Position
     {
-        public static Position Invalid = new Position(0xFFFF, 0xFFFF);
+        public static readonly Position INVALID = new Position(0xFFFF, 0xFFFF);
 
         public Position(ushort x, ushort y, sbyte z = 0) : this()
         {
@@ -36,11 +36,9 @@ namespace ClassicUO.Game
             Z = z;
         }
 
-        public ushort X;
-
-        public ushort Y;
-
-        public sbyte Z;
+        public readonly ushort X;
+        public readonly ushort Y;
+        public readonly sbyte Z;
 
         public static bool operator ==(Position p1, Position p2)
         {
@@ -95,6 +93,11 @@ namespace ClassicUO.Game
         public int DistanceTo(Position position)
         {
             return Math.Max(Math.Abs(position.X - X), Math.Abs(position.Y - Y));
+        }
+
+        public int DistanceTo(int x, int y)
+        {
+            return Math.Max(Math.Abs(x - X), Math.Abs(y - Y));
         }
 
         public double DistanceToSqrt(Position position)

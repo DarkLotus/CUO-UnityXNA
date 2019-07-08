@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -24,70 +24,118 @@
 using System;
 using System.Collections.Generic;
 
-using ClassicUO.Game.Gumps;
-using ClassicUO.Input;
+using ClassicUO.Game.Managers;
 using ClassicUO.Interfaces;
+using ClassicUO.IO;
 using ClassicUO.Renderer;
+using ClassicUO.Utility.Coroutines;
+using ClassicUO.Utility.Logging;
 
-using Microsoft.Xna.Framework.Graphics;
+using SDL2;
 
 namespace ClassicUO.Game.Scenes
 {
-    public abstract class Scene : IUpdateable, IDisposable
+    internal abstract class Scene : IUpdateable
     {
-        protected Scene(ScenesType type)
-        {
-            ChainActions = new List<Func<bool>>();
-            SceneType = type;
-            Game = Service.Get<GameLoop>();
-            Device = Game.GraphicsDevice;
-            UIManager = Service.Get<UIManager>();
-            InputManager = Service.Get<InputManager>();
-        }
+        public bool IsDestroyed { get; private set; }
 
-        public IReadOnlyList<Func<bool>> ChainActions { get; }
-
-        protected GraphicsDevice Device { get; }
-
-        public bool IsDisposed { get; private set; }
-
-        protected GameLoop Game { get; }
-
-        protected UIManager UIManager { get; }
-
-        protected InputManager InputManager { get; }
+        public bool IsLoaded { get; private set; }
 
         public int RenderedObjectsCount { get; protected set; }
 
-        public ScenesType SceneType { get; }
+        public CoroutineManager Coroutines { get; } = new CoroutineManager();
 
-        public virtual void Dispose()
-        {
-            if (IsDisposed)
-                return;
-            IsDisposed = true;
-            Unload();
-        }
+        public AudioManager Audio { get; private set; }
 
         public virtual void Update(double totalMS, double frameMS)
         {
+            Audio?.Update();
+            Coroutines.Update();
         }
+
+        public virtual void Destroy()
+        {
+            if (IsDestroyed)
+                return;
+
+            IsDestroyed = true;
+            Unload();
+        }
+
 
         public virtual void Load()
         {
+            if (this is GameScene || this is LoginScene)
+            {
+                Audio = new AudioManager();
+                Coroutine.Start(this, CleaningResources(), "cleaning resources");
+            }
+
+            IsLoaded = true;
         }
 
         public virtual void Unload()
         {
+            Audio?.StopMusic();
+            Coroutines.Clear();
         }
-
-        public virtual void FixedUpdate(double totalMS, double frameMS)
-        {
-        }
-
-        public virtual bool Draw(SpriteBatch3D sb3D, SpriteBatchUI sbUI)
+        
+        public virtual bool Draw(UltimaBatcher2D batcher)
         {
             return true;
+        }
+
+
+        internal virtual void OnLeftMouseUp() { }
+        internal virtual void OnLeftMouseDown() { }
+
+        internal virtual void OnRightMouseUp() { }
+        internal virtual void OnRightMouseDown() { }
+
+        internal virtual void OnMiddleMouseUp() { }
+        internal virtual void OnMiddleMouseDown() { }
+
+
+        internal virtual bool OnLeftMouseDoubleClick() => false;
+        internal virtual bool OnRightMouseDoubleClick() => false;
+        internal virtual bool OnMiddleMouseDoubleClick() => false;
+        internal virtual void OnMouseWheel(bool up) { }
+        internal virtual void OnMouseDragging() { }
+        internal virtual void OnTextInput(string text) { }
+        internal virtual void OnKeyDown(SDL.SDL_KeyboardEvent e) { }
+        internal virtual void OnKeyUp(SDL.SDL_KeyboardEvent e) { }
+
+
+        private IEnumerable<IWaitCondition> CleaningResources()
+        {
+            Log.Message(LogTypes.Trace, "Cleaning routine running...");
+
+            yield return new WaitTime(TimeSpan.FromMilliseconds(10000));
+
+            while (!IsDestroyed)
+            {
+                FileManager.Art.CleaUnusedResources();
+
+                yield return new WaitTime(TimeSpan.FromMilliseconds(500));
+
+                FileManager.Gumps.CleaUnusedResources();
+
+                yield return new WaitTime(TimeSpan.FromMilliseconds(500));
+
+                FileManager.Textmaps.CleaUnusedResources();
+
+                yield return new WaitTime(TimeSpan.FromMilliseconds(500));
+
+                FileManager.Animations.CleaUnusedResources();
+
+                yield return new WaitTime(TimeSpan.FromMilliseconds(500));
+
+                World.Map?.ClearUnusedBlocks();
+
+                yield return new WaitTime(TimeSpan.FromMilliseconds(500));
+            }
+
+            Log.Message(LogTypes.Trace, "Cleaning routine finished");
         }
     }
 }

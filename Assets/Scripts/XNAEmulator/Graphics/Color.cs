@@ -2,7 +2,7 @@
 
 /*
 MIT License
-Copyright © 2006 The Mono.Xna Team
+Copyright ï¿½ 2006 The Mono.Xna Team
 
 All rights reserved.
 
@@ -72,7 +72,7 @@ using System;
 using System.Collections;
 using Microsoft.Xna.Framework.Graphics.PackedVector;
 
-namespace Microsoft.Xna.Framework.Graphics
+namespace Microsoft.Xna.Framework
 {
     public struct Color : IPackedVector<uint>, IPackedVector, IEquatable<Color>
     {

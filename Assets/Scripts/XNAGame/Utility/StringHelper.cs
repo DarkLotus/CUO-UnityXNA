@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -25,8 +25,12 @@ using System.Text;
 
 namespace ClassicUO.Utility
 {
-    public static class StringHelper
+    internal static class StringHelper
     {
+        private static readonly char[] _dots = {'.', ',', ';', '!'};
+        private static readonly StringBuilder _sb = new StringBuilder();
+
+
         public static string CapitalizeFirstCharacter(string str)
         {
             if (string.IsNullOrEmpty(str))
@@ -45,42 +49,87 @@ namespace ClassicUO.Utility
 
             if (str.Length == 1)
                 return char.ToUpper(str[0]).ToString();
-            StringBuilder sb = new StringBuilder();
+
+            _sb.Clear();
+
             bool capitalizeNext = true;
 
             for (int i = 0; i < str.Length; i++)
             {
-                if (capitalizeNext)
-                    sb.Append(char.ToUpper(str[i]));
-                else
-                    sb.Append(str[i]);
-                capitalizeNext = " .,;!".Contains(str[i].ToString());
+                _sb.Append(capitalizeNext ? char.ToUpper(str[i]) : str[i]);
+                capitalizeNext = false;
+
+                for (int j = 0; j < _dots.Length; j++)
+                {
+                    if (str[i] == _dots[j])
+                    {
+                        capitalizeNext = true;
+
+                        break;
+                    }
+                }
             }
 
-            return sb.ToString();
+            return _sb.ToString();
         }
 
         public static unsafe string ReadUTF8(byte* data)
         {
-            byte* endPtr = data;
+            byte* ptr = data;
 
-            if (*endPtr != 0)
+            while (*ptr != 0)
+                ptr++;
+
+            return Encoding.UTF8.GetString(data, (int) (ptr - data));
+        }
+
+        public static bool IsSafeChar(int c)
+        {
+            return c >= 0x20 && c < 0xFFFE;
+        }
+
+        public static void AddSpaceBeforeCapital(string[] str, bool checkAcronyms = true)
+        {
+            for (int i = 0; i < str.Length; i++) str[i] = AddSpaceBeforeCapital(str[i], checkAcronyms);
+        }
+
+        public static string AddSpaceBeforeCapital(string str, bool checkAcronyms = true)
+        {
+            if (string.IsNullOrWhiteSpace(str))
+                return "";
+
+            _sb.Clear();
+            _sb.Append(str[0]);
+
+            for (int i = 1, len = str.Length - 1; i <= len; i++)
             {
-                int bytes = 0;
-
-                while (*endPtr != 0)
+                if (char.IsUpper(str[i]))
                 {
-                    endPtr++;
-                    bytes++;
+                    if (str[i - 1] != ' ' && !char.IsUpper(str[i - 1]) ||
+                        checkAcronyms && char.IsUpper(str[i - 1]) && i < len && !char.IsUpper(str[i + 1]))
+                        _sb.Append(' ');
                 }
 
-                char* buffer = stackalloc char[bytes];
-                int chars = Encoding.UTF8.GetChars(data, bytes, buffer, bytes);
-
-                return new string(buffer, 0, chars);
+                _sb.Append(str[i]);
             }
 
-            return string.Empty;
+            return _sb.ToString();
+        }
+
+        public static string RemoveUpperLowerChars(string str, bool removelower = true)
+        {
+            if (string.IsNullOrWhiteSpace(str))
+                return "";
+
+            _sb.Clear();
+
+            for (int i = 0; i < str.Length; i++)
+            {
+                if (char.IsUpper(str[i]) == removelower || str[i] == ' ')
+                    _sb.Append(str[i]);
+            }
+
+            return _sb.ToString();
         }
     }
 }

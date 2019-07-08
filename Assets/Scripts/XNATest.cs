@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Linq;
 
 public class XNATest : MonoBehaviour {
-    GameLoop game;
+    Engine game;
 	DrawQueue drawQueue;
 	
 	public  float updateInterval = 0.5F;
@@ -29,11 +29,12 @@ public class XNATest : MonoBehaviour {
         dev = new GraphicsDevice22();
         drawQueue = new DrawQueue();
         Log.Start( LogTypes.All );
-        game = new GameLoop();
+        Engine.Run(new string[]{});
+        game = Engine.Instance;
         game.DrawQueue = drawQueue;
-        game.Initialize();
+        //game.Initialize();
 
-        game.Run();
+        //game.Run();
 		timeleft = updateInterval;
         //Application.targetFrameRate = 30;
 
@@ -46,15 +47,20 @@ public class XNATest : MonoBehaviour {
     }
 
 	// Update is called once per frame
-	void Update () {
+	void Update ()
+	{
 
+		if (game == null)
+			return;
 		float deltaTime = Time.deltaTime;
 		if(deltaTime > 0.050f)
 		{
 			deltaTime = 0.050f;
 		}
         //Debug.Log(deltaTime);
-        game.Tick( Time.deltaTime );
+        long microseconds = (int)(deltaTime * 1000000);
+        long ticks = microseconds * 10;
+        game.Tick((uint)ticks );
         drawQueue.Clear();
 
         timeleft -= Time.deltaTime;
@@ -91,7 +97,32 @@ public class XNATest : MonoBehaviour {
         public Material Material { get; set; }
     }
     private static GraphicsDevice22 dev;
+    internal class IndexedPrimativeDrawCall : XNATest.DrawCall
+    {
+	    public IndexedPrimativeDrawCall(Microsoft.Xna.Framework.Graphics.Texture2D texture2D, PositionNormalTextureColor[] vertices, int primitiveCount)
+	    {
+		    PrimativeCount = primitiveCount;
+		    Texture = texture2D.UnityTexture;
+		    Verts = new PositionNormalTextureColor[vertices.Length];
+			vertices.CopyTo( Verts, 0 );
+            for ( int i = 0; i < vertices.Length; i++ )
+            {
+                Verts[i].TextureCoordinate.Y = 1 - Verts[i].TextureCoordinate.Y;
+            }
+            Position = new Vector3( vertices[0].Position.X, vertices[0].Position.Y );
+            Material = dev.GetMat( texture2D ); //new Material( Shader.Find( "Unlit/Transparent" ) );// 
 
+            //TODO
+            Material.SetVector( "_Hue", new Vector4( vertices[0].Hue.X, vertices[0].Hue.Y, vertices[0].Hue.Z, 0 ) );
+	    }
+
+	    public int PrimativeCount { get; set; }
+	    public Material Material { get; set; }
+
+	    public Vector3 Position { get; set; }
+
+	    public PositionNormalTextureColor[] Verts { get; set; }
+    }
     public class MeshDrawCall : DrawCall
     {
         public MeshDrawCall( Microsoft.Xna.Framework.Graphics.Texture2D texture, SpriteVertex[] vertices )
@@ -168,9 +199,9 @@ public class XNATest : MonoBehaviour {
     public class SetRenderTextureDrawCall : DrawCall
     {
         
-        public SetRenderTextureDrawCall(RenderTexture text)
+        public SetRenderTextureDrawCall(RenderTarget2D text)
         {
-            Texture = text;
+            Texture = text.UnityTexture;
         }
     }
 
@@ -183,6 +214,9 @@ public class XNATest : MonoBehaviour {
     public static Dictionary<UnityEngine.Texture2D, int> TextureIndex = new Dictionary<UnityEngine.Texture2D, int>();
     private void OnPostRender()
     {
+	    
+	    if (game == null)
+		    return;
         dev.ResetPools();
         game.DrawUnity( Time.deltaTime );
         
@@ -233,6 +267,21 @@ public class XNATest : MonoBehaviour {
                 // MainTexure.SetPass( 0 );
                 lastMaterial = null;
                 cnt = 0;
+            }
+            else if (call is IndexedPrimativeDrawCall icall)
+            {
+	            
+	            var testmesh = dev.GetMesh(icall.PrimativeCount);
+		            testmesh.Populate( icall.Verts, icall.Verts.Length );
+	         // if( lastMaterial  != MainTexure )
+	         {
+		         icall.Material.SetPass(0);
+		           // MainTexure.SetPass( 0 );
+		            //lastMaterial = MainTexure;
+
+	            }
+	          Graphics.DrawMeshNow( testmesh.Mesh, Vector3.zero, Quaternion.identity );
+
             }
             else if (call is MeshDrawCall mcall)
             {

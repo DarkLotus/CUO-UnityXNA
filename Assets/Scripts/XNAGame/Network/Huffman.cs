@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -1075,11 +1075,9 @@ namespace ClassicUO.Network
 
         private static int RemoveBit(ref byte b, int bit)
         {
-            int bit_num = 0;
-
             if (GetBit(b, bit) != -1)
             {
-                bit_num = 1 << (bit - 1);
+                int bit_num = 1 << (bit - 1);
                 b ^= (byte) bit_num;
             }
 

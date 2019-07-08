@@ -55,7 +55,7 @@ namespace Microsoft.Xna.Framework.Graphics
     {
         internal void SetValue<T>( T val )
         {
-            throw new NotImplementedException();
+           // throw new NotImplementedException();
         }
         public void Apply()
         {
@@ -71,6 +71,11 @@ namespace Microsoft.Xna.Framework.Graphics
 
         public Effect( GraphicsDevice graphicsDevice, byte[] v ) : this( graphicsDevice )
         {
+            Parameters.Add("MatrixTransform", new EffectParameter());
+            Parameters.Add("WorldMatrix", new EffectParameter());
+            Parameters.Add("Viewport", new EffectParameter());
+            Techniques.Add("HueTechnique", new EffectTechnique());
+
         }
 
         internal Effect(GraphicsDevice graphicsDevice)
@@ -80,6 +85,11 @@ namespace Microsoft.Xna.Framework.Graphics
 
 			this.graphicsDevice = graphicsDevice;
 		}
+
+        protected Effect(Effect cloneSource)
+        {
+            
+        }
 
         public EffectTechnique CurrentTechnique { get; internal set; }
     }

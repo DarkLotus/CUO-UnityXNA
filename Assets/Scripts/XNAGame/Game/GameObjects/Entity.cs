@@ -1,6 +1,6 @@
 #region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -24,65 +24,47 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 
 using ClassicUO.Game.Data;
-using ClassicUO.Interfaces;
+using ClassicUO.Game.UI.Gumps;
 using ClassicUO.Utility;
 
 namespace ClassicUO.Game.GameObjects
 {
-    [Flags]
-    public enum Flags : byte
+    internal abstract class Entity : GameObject
     {
-        Frozen = 0x01,
-        Female = 0x02,
-        Poisoned = 0x04,
-        Flying = 0x04,
-        YellowBar = 0x08,
-        IgnoreMobiles = 0x10,
-        Movable = 0x20,
-        WarMode = 0x40,
-        Hidden = 0x80
-    }
-
-    public abstract class Entity : GameObject, IDeferreable
-    {
-        protected const float CHARACTER_ANIMATION_DELAY = 80;
-        private readonly ConcurrentDictionary<int, Property> _properties = new ConcurrentDictionary<int, Property>();
         protected Delta _delta;
         private Direction _direction;
+        private Item[] _equipment;
         private Flags _flags;
-        private Graphic _graphic;
         private Hue _hue;
-        protected long _lastAnimationChangeTime;
         private string _name;
-        protected Action<Entity> _OnDisposed;
-        protected Action<Entity> _OnUpdated;
-        // private Position _position;
 
-        protected Entity(Serial serial) : base(World.Map)
+        protected long LastAnimationChangeTime { get; set; }
+
+        public EntityCollection<Item> Items { get; private set; }
+
+        public bool HasEquipment => _equipment != null;
+
+        public Item[] Equipment
         {
-            Serial = serial;
-            Items = new EntityCollection<Item>();
-            //_position = base.Position;
-            PositionChanged += OnPositionChanged;
+            get => _equipment ?? (_equipment = new Item[(int) Layer.Bank + 0x11]);
+            set => _equipment = value;
         }
 
-        public EntityCollection<Item> Items { get; }
+        public Serial Serial { get; set; }
+        public bool IsClicked { get; set; }
 
-        public Serial Serial { get; }
-
-        public IReadOnlyList<Property> Properties => (IReadOnlyList<Property>) _properties.Values;
+        public ConcurrentDictionary<int, Property> Properties { get; } = new ConcurrentDictionary<int, Property>();
 
         public override Graphic Graphic
         {
-            get => _graphic;
+            get => base.Graphic;
             set
             {
-                if (_graphic != value)
+                if (base.Graphic != value)
                 {
-                    _graphic = value;
+                    base.Graphic = value;
                     _delta |= Delta.Appearance;
                 }
             }
@@ -95,9 +77,10 @@ namespace ClassicUO.Game.GameObjects
             {
                 ushort fixedColor = (ushort) (value & 0x3FFF);
 
-                if (fixedColor > 0)
+                if (fixedColor != 0)
                 {
-                    if (fixedColor >= 0x0BB8) fixedColor = 1;
+                    if (fixedColor >= 0x0BB8)
+                        fixedColor = 1;
                     fixedColor |= (ushort) (value & 0xC000);
                 }
                 else
@@ -124,18 +107,7 @@ namespace ClassicUO.Game.GameObjects
             }
         }
 
-        public override Position Position
-        {
-            get => base.Position;
-            set
-            {
-                if (base.Position != value)
-                {
-                    base.Position = value;
-                    _delta |= Delta.Position;
-                }
-            }
-        }
+        public bool IsHidden => (Flags & Flags.Hidden) != 0;
 
         public Direction Direction
         {
@@ -146,6 +118,7 @@ namespace ClassicUO.Game.GameObjects
                 {
                     _direction = value;
                     _delta |= Delta.Position;
+                    OnDirectionChanged();
                 }
             }
         }
@@ -165,40 +138,24 @@ namespace ClassicUO.Game.GameObjects
 
         public virtual bool Exists => World.Contains(Serial);
 
-        public DeferredEntity DeferredObject { get; set; }
+        public uint PropertiesHash { get; set; }
 
-        public void SetCallbacks(Action<Entity> onUpdate, Action<Entity> onDispose)
+        protected Entity(Serial serial)
         {
-            if (onUpdate != null)
-                _OnUpdated += onUpdate;
-
-            if (onDispose != null)
-                _OnDisposed += onDispose;
+            Serial = serial;
+            Items = new EntityCollection<Item>();
         }
 
-        public void ClearCallBacks(Action<Entity> onUpdate, Action<Entity> onDispose)
-        {
-            if (_OnUpdated == null && _OnDisposed == null)
-                return;
-
-            if (_OnUpdated.GetInvocationList().Contains(onUpdate))
-                _OnUpdated -= onUpdate;
-
-            if (_OnDisposed.GetInvocationList().Contains(onDispose))
-                _OnDisposed -= onDispose;
-        }
 
         public event EventHandler AppearanceChanged, PositionChanged, AttributesChanged, PropertiesChanged;
 
         public void UpdateProperties(IEnumerable<Property> props)
         {
-            _properties.Clear();
+            Properties.Clear();
             int temp = 0;
-            foreach (Property p in props) _properties.TryAdd(temp++, p);
+            foreach (Property p in props) Properties.TryAdd(temp++, p);
             _delta |= Delta.Properties;
         }
-
-        public uint PropertiesHash { get; set; }
 
         protected virtual void OnProcessDelta(Delta d)
         {
@@ -206,6 +163,29 @@ namespace ClassicUO.Game.GameObjects
             if (d.HasFlag(Delta.Position)) PositionChanged.Raise(this);
             if (d.HasFlag(Delta.Attributes)) AttributesChanged.Raise(this);
             if (d.HasFlag(Delta.Properties)) PropertiesChanged.Raise(this);
+        }
+
+        public override void Update(double totalMS, double frameMS)
+        {
+            base.Update(totalMS, frameMS);
+
+            if (UseObjectHandles && !ObjectHandlesOpened)
+            {
+                //NameOverheadGump gump = Engine.UI.GetByLocalSerial<NameOverheadGump>(Serial);
+
+                //if (gump == null)
+                {
+                    Engine.UI.Add(new NameOverheadGump(this));
+                    ObjectHandlesOpened = true;
+                }
+            }
+        }
+
+        protected override void OnPositionChanged()
+        {
+            base.OnPositionChanged();
+
+            _delta |= Delta.Position;
         }
 
         public void ProcessDelta()
@@ -216,25 +196,13 @@ namespace ClassicUO.Game.GameObjects
             _delta = Delta.None;
         }
 
-        public override void Dispose()
+        public override void Destroy()
         {
-            if (DeferredObject != null)
-            {
-                DeferredObject.Reset();
-                DeferredObject = null;
-            }
-
-            _properties.Clear();
-            _OnDisposed?.Invoke(this);
-            _OnUpdated = null;
-            _OnDisposed = null;
-            base.Dispose();
+            _equipment = null;
+            Properties.Clear();
+            base.Destroy();
         }
 
-        protected virtual void OnPositionChanged(object sender, EventArgs e)
-        {
-            Tile = World.Map.GetTile((short) Position.X, (short) Position.Y);
-        }
 
         public static implicit operator Serial(Entity entity)
         {
@@ -251,9 +219,9 @@ namespace ClassicUO.Game.GameObjects
             return Serial.GetHashCode();
         }
 
-        public virtual void ProcessAnimation()
-        {
-        }
+        public abstract void ProcessAnimation(out byte dir, bool evalutate = false);
+
+        public abstract Graphic GetGraphicForAnimation();
 
         [Flags]
         protected enum Delta
@@ -268,7 +236,8 @@ namespace ClassicUO.Game.GameObjects
             Stamina = 1 << 6,
             Stats = 1 << 7,
             Skills = 1 << 8,
-            Properties = 1 << 9
+            Properties = 1 << 9,
+            ItemsUpdate = 1 << 10
         }
     }
 }

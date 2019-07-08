@@ -1,6 +1,6 @@
 #region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -25,25 +25,86 @@ using System;
 using System.Collections.Generic;
 
 using ClassicUO.IO.Resources;
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace ClassicUO.Renderer
 {
-    public class SpriteTexture : Texture2D
+    internal class SpriteTexture : Texture2D
     {
-        public SpriteTexture(int width, int height, bool is32bit = true) : base(Service.Get<SpriteBatch3D>().GraphicsDevice, width, height, false, is32bit ? SurfaceFormat.Color : SurfaceFormat.Bgra5551)
+        private readonly bool _is32Bit;
+        private bool[] _hitMap;
+
+        public SpriteTexture(int width, int height, bool is32bit = true) : base(Engine.Batcher.GraphicsDevice, width, height, false, is32bit ? SurfaceFormat.Color : SurfaceFormat.Bgra5551)
         {
-            Ticks = CoreGame.Ticks + 3000;
+            Ticks = Engine.Ticks + 3000;
+            _is32Bit = is32bit;
         }
 
         public long Ticks { get; set; }
 
 
+        public void SetDataHitMap16(ushort[] data)
+        {
+            int size = Width * Height;
+            _hitMap = new bool[size];
+
+            for (int i = size - 1; i >= 0; --i)
+                _hitMap[i] = data[i] != 0;
+
+            SetData(data);
+        }
+
+       /* public unsafe void SetDataHitMap16(ushort* data)
+        {
+            int size = Width * Height;
+            _hitMap = new bool[size];
+
+            for (int i = size - 1; i >= 0; --i)
+                _hitMap[i] = data[i] != 0;
+
+            SetDataPointerEXT(0, new Rectangle(0, 0, Width, Height), (IntPtr) data, size);
+        }*/
+
+        public void SetDataHitMap32(uint[] data)
+        {
+            int size = Width * Height;
+            _hitMap = new bool[size];
+
+            for (int i = size - 1; i >= 0; --i)
+                _hitMap[i] = data[i] != 0;
+
+            SetData(data);
+        }
+
+        public bool Contains(int x, int y, bool pixelCheck = true)
+        {
+            if (x >= 0 && y >= 0 && x < Width && y < Height)
+            {
+                if (!pixelCheck)
+                    return true;
+
+                int pos = y * Width + x;
+
+                if (pos < _hitMap.Length)
+                    return _hitMap[pos];
+            }
+
+            return false;
+        }
+
+       /* protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+
+            _hitMap = null;
+        }*/
+
        
     }
 
-    public class FontTexture : SpriteTexture
+    internal class FontTexture : SpriteTexture
     {
         public FontTexture(int width, int height, int linescount, List<WebLinkRect> links) : base(width, height)
         {
@@ -54,11 +115,31 @@ namespace ClassicUO.Renderer
         public int LinesCount { get; }
 
         public List<WebLinkRect> Links { get; }
-        public object Bounds { get; internal set; }
+    }
 
-        internal void SetDataPointerEXT( int v, object bounds, IntPtr ptrData, int length )
+    internal class AnimationFrameTexture : SpriteTexture
+    {
+        public AnimationFrameTexture(int width, int height) : base(width, height, false)
         {
-            //throw new NotImplementedException();
         }
+
+        public short CenterX { get; set; }
+
+        public short CenterY { get; set; }
+    }
+
+    internal class ArtTexture : SpriteTexture
+    {
+        public ArtTexture(int offsetX, int offsetY, int offsetW, int offsetH, int width, int height) : base(width, height, false)
+        {
+            ImageRectangle = new Rectangle(offsetX, offsetY, offsetW, offsetH);
+        }
+
+        public ArtTexture(Rectangle rect, int width, int height) : base(width, height, false)
+        {
+            ImageRectangle = rect;
+        }
+
+        public Rectangle ImageRectangle { get; }
     }
 }

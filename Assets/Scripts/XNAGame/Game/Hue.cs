@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -26,21 +26,23 @@ using System.Globalization;
 
 namespace ClassicUO.Game
 {
-    public struct Hue : IComparable, IComparable<ushort>
+    internal readonly struct Hue : IComparable<ushort>
     {
-        public const ushort Invariant = ushort.MaxValue;
-        public static Hue SystemCol = new Hue(0x3B2);
-        public static Hue Good = new Hue(68);
-        public static Hue Error = new Hue(37);
-        public static Hue Warning = new Hue(1174);
+        public bool Equals(Hue other)
+        {
+            return _value == other._value;
+        }
+
+        public const ushort INVALID = 0xFFFF;
+
+        public const ushort ZERO = 0;
+
         private readonly ushort _value;
 
         public Hue(ushort hue)
         {
             _value = hue;
         }
-
-        public bool IsInvariant => _value == Invariant;
 
         public static implicit operator Hue(ushort value)
         {
@@ -72,15 +74,18 @@ namespace ClassicUO.Game
             return h1._value > h2._value;
         }
 
-        public int CompareTo(object obj)
-        {
-            return _value.CompareTo(obj);
-        }
-
         public int CompareTo(ushort other)
         {
             return _value.CompareTo(other);
         }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+
+            return obj is Hue other && Equals(other);
+        }
+
 
         public override string ToString()
         {
@@ -90,14 +95,6 @@ namespace ClassicUO.Game
         public override int GetHashCode()
         {
             return _value.GetHashCode();
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is Hue hue) return this == hue;
-            if (obj is ushort @ushort) return _value == @ushort;
-
-            return false;
         }
 
         public static Hue Parse(string str)

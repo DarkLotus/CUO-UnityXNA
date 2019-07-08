@@ -580,5 +580,21 @@ namespace SDL2
             KMOD_MODE = 16384,
             KMOD_RESERVED = 32768
         }
+
+        public enum SDL_MessageBoxFlags
+        {
+            SDL_MESSAGEBOX_INFORMATION
+        }
+
+        public static IntPtr SDL_GL_GetCurrentWindow()
+        {
+            return IntPtr.Zero;
+            ;
+        }
+
+        public static void SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags sdlMessageboxInformation, string settingsFile, string hasBeenCreatedIntoClassicuoMainFolderPleaseFillIt, IntPtr sdlGlGetCurrentWindow)
+        {
+            
+        }
     }
 }

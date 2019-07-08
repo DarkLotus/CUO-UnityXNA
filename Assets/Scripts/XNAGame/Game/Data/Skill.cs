@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -30,7 +30,7 @@ namespace ClassicUO.Game.Data
         Locked = 2
     }
 
-    public sealed class Skill
+    internal sealed class Skill
     {
         public Skill(string name, int index, bool click)
         {

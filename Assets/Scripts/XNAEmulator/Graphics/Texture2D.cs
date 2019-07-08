@@ -66,6 +66,11 @@ namespace Microsoft.Xna.Framework.Graphics
             //TODO
             SetData<T>( data, 0, data.Length );
         }
+        
+        public void GetData(ushort[] originalData, int i, int pheight)
+        {
+            throw new NotImplementedException();
+        }
         public static int u16Tou32( ushort color )
         {
             //Bgra5551

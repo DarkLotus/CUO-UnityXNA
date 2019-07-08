@@ -1,6 +1,6 @@
 #region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -25,7 +25,7 @@ using System;
 
 namespace ClassicUO.Network
 {
-    public abstract class PacketBase
+    internal abstract class PacketBase
     {
         protected abstract byte this[int index] { get; set; }
 
@@ -37,13 +37,13 @@ namespace ClassicUO.Network
 
         public int Position { get; protected set; }
 
-        protected abstract void EnsureSize(int length);
-        public abstract byte[] ToArray();
+        protected abstract bool EnsureSize(int length);
+        public abstract ref byte[] ToArray();
 
-        public void Skip(int lengh)
+        public void Skip(int length)
         {
-            EnsureSize(lengh);
-            Position += lengh;
+            EnsureSize(length);
+            Position += length;
         }
 
         public void Seek(int index)
@@ -56,6 +56,14 @@ namespace ClassicUO.Network
         {
             EnsureSize(1);
             this[Position++] = v;
+        }
+
+        public void WriteBytes(byte[] buffer, int offset, int length)
+        {
+            EnsureSize(length);
+
+            for (int i = offset; i < length; i++)
+                this[Position++] = buffer[i];
         }
 
         public void WriteSByte(sbyte v)
@@ -84,19 +92,35 @@ namespace ClassicUO.Network
             WriteByte((byte) v);
         }
 
-        public void WriteASCII(string value)
+        public unsafe void WriteASCII(string value)
         {
             EnsureSize(value.Length + 1);
-            foreach (char c in value) WriteByte((byte) c);
+
+            fixed (char* ptr = value)
+            {
+                char* buff = ptr;
+
+                while (*buff != 0)
+                    WriteByte((byte) *buff++);
+            }
+
             WriteByte(0);
         }
 
-        public void WriteASCII(string value, int length)
+        public unsafe void WriteASCII(string value, int length)
         {
             EnsureSize(length);
 
             if (value.Length > length) throw new ArgumentOutOfRangeException();
-            for (int i = 0; i < value.Length; i++) WriteByte((byte) value[i]);
+
+            fixed (char* ptr = value)
+            {
+                char* buff = ptr;
+                byte* end = (byte*) ptr + length;
+
+                while (*buff != 0 && &buff != &end)
+                    WriteByte((byte) *buff++);
+            }
 
             if (value.Length < length)
             {
@@ -105,29 +129,39 @@ namespace ClassicUO.Network
             }
         }
 
-        public void WriteUnicode(string value)
+        public unsafe void WriteUnicode(string value)
         {
             EnsureSize((value.Length + 1) * 2);
 
-            foreach (char c in value)
+            fixed (char* ptr = value)
             {
-                WriteByte((byte) (c >> 8));
-                WriteByte((byte) c);
+                short* buff = (short*) ptr;
+
+                while (*buff != 0)
+                    WriteUShort((ushort) *buff++);
             }
 
             WriteUShort(0);
         }
 
-        public void WriteUnicode(string value, int length)
+        public unsafe void WriteUnicode(string value, int length)
         {
             EnsureSize(length);
 
-            if (value.Length > length) throw new ArgumentOutOfRangeException();
+            //the string is automatically resized based on length provided
+            /*if (value.Length > length)
+                throw new ArgumentOutOfRangeException();*/
 
-            for (int i = 0; i < value.Length; i++)
+            fixed (char* ptr = value)
             {
-                WriteByte((byte) (value[i] >> 8));
-                WriteByte((byte) value[i]);
+                short* buff = (short*) ptr;
+                int pos = 0;
+
+                while (*buff != 0 && pos < length)
+                {
+                    WriteUShort((ushort) *buff++);
+                    pos++;
+                }
             }
 
             if (value.Length < length)

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using ClassicUO.Renderer;
 using UnityEngine;
 using Debug = System.Diagnostics.Debug;
 using UnityGraphics = UnityEngine.Graphics;
@@ -31,6 +33,15 @@ namespace Microsoft.Xna.Framework.Graphics
             set { viewport = value; }
         }
 
+        public Rectangle ScissorRectangle { get; set; }
+        public BlendState BlendState { get; set; }
+        public DepthStencilState DepthStencilState { get; set; }
+        public RasterizerState RasterizerState { get; set; }
+        public IndexBuffer Indices { get; set; }
+
+        public Texture2D[] Textures = new Texture2D[2];
+        private VertexBuffer m_VertexBuffer;
+
 
         internal void Clear( Color color )
         {
@@ -52,9 +63,65 @@ namespace Microsoft.Xna.Framework.Graphics
 
         }
 
- 
+
+        public void Clear(ClearOptions depthBuffer, Vector4 vectorClear, int i, int i1)
+        {
+            
+        }
+
+        public void Present()
+        {
+            //throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Draw geometry by indexing into the vertex buffer.
+        /// </summary>
+        /// <param name="primitiveType">
+        /// The type of primitives in the index buffer.
+        /// </param>
+        /// <param name="baseVertex">
+        /// Used to offset the vertex range indexed from the vertex buffer.
+        /// </param>
+        /// <param name="minVertexIndex">
+        /// A hint of the lowest vertex indexed relative to baseVertex.
+        /// </param>
+        /// <param name="numVertices">
+        /// A hint of the maximum vertex indexed.
+        /// </param>
+        /// <param name="startIndex">
+        /// The index within the index buffer to start drawing from.
+        /// </param>
+        /// <param name="primitiveCount">
+        /// The number of primitives to render from the index buffer.
+        /// </param>
+        public void DrawIndexedPrimitives(
+            PrimitiveType primitiveType,
+            int baseVertex,
+            int minVertexIndex,
+            int numVertices,
+            int startIndex,
+            int primitiveCount
+        )
+        {
+            var verts = m_VertexBuffer.Data.Skip(baseVertex).Take(numVertices).ToArray();
+            //Texture is in Textures[0]
+            XNATest.Draw.Enqueue(new XNATest.IndexedPrimativeDrawCall(Textures[0],verts,primitiveCount));
+        }
+
+
+        public void SetVertexBuffer(VertexBuffer vertexBuffer)
+        {
+            m_VertexBuffer = vertexBuffer;
+        }
     }
-    public class GraphicsDevice22 : IDisposable
+    
+    
+    
+    
+    
+    
+     public class GraphicsDevice22 : IDisposable
     {
         public Texture2D[] Textures = new Texture2D[3];
         private Matrix4x4 _matrix;
@@ -243,7 +310,26 @@ namespace Microsoft.Xna.Framework.Graphics
                 Mesh.triangles = triangles;
             }
             
+            internal void Populate( ClassicUO.Renderer.PositionNormalTextureColor[] vertexData, int numVertices )
+            {
+                for ( int i = 0; i < numVertices; i++ )
+                {
+                    var p = vertexData[i].Position;
+                    Vertices[i] = new UnityEngine.Vector3( p.X, p.Y, p.Z );
 
+                    var uv = vertexData[i].TextureCoordinate;
+                    UVs[i] = new UnityEngine.Vector2( uv.X, /*1 - */uv.Y );
+
+                    var c = vertexData[i].Normal;
+                    // Colors[i] = new Color32( c.R, c.G, c.B, c.A );
+                }
+                //we could clearly less if we remembered how many we used last time
+                Array.Clear( Vertices, numVertices, Vertices.Length - numVertices );
+
+                Mesh.vertices = Vertices;
+                Mesh.uv = UVs;
+                //Mesh.colors32 = Colors;
+            }
                  public void Populate( ClassicUO.Renderer.SpriteVertex[] vertexData, int numVertices )
             {
                 for ( int i = 0; i < numVertices; i++ )
@@ -357,4 +443,5 @@ namespace Microsoft.Xna.Framework.Graphics
             throw new NotImplementedException();
         }
     }
+   
 }

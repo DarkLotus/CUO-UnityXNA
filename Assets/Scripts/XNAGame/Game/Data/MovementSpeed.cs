@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -27,7 +27,7 @@ using ClassicUO.Game.GameObjects;
 
 namespace ClassicUO.Game.Data
 {
-    public static class MovementSpeed
+    internal static class MovementSpeed
     {
         private const int STEP_DELAY_MOUNT_RUN = 100;
         private const int STEP_DELAY_MOUNT_WALK = 200;
@@ -52,16 +52,15 @@ namespace ClassicUO.Game.Data
 
             switch (dir & 7)
             {
-                case 0:
-
+                case 0: //W
                 {
                     x *= step_NESW;
                     y *= -step_NESW;
 
                     break;
                 }
-                case 1:
 
+                case 1: //NW
                 {
                     x *= step_NESW_D;
                     checkX = 44;
@@ -69,16 +68,16 @@ namespace ClassicUO.Game.Data
 
                     break;
                 }
-                case 2:
 
+                case 2: //N
                 {
                     x *= step_NESW;
                     y *= step_NESW;
 
                     break;
                 }
-                case 3:
 
+                case 3: //NE
                 {
                     x = 0.0f;
                     y *= step_NESW_D;
@@ -86,16 +85,16 @@ namespace ClassicUO.Game.Data
 
                     break;
                 }
-                case 4:
 
+                case 4: //E
                 {
                     x *= -step_NESW;
                     y *= step_NESW;
 
                     break;
                 }
-                case 5:
 
+                case 5: //SE
                 {
                     x *= -step_NESW_D;
                     checkX = 44;
@@ -103,16 +102,16 @@ namespace ClassicUO.Game.Data
 
                     break;
                 }
-                case 6:
 
+                case 6: //S
                 {
                     x *= -step_NESW;
                     y *= -step_NESW;
 
                     break;
                 }
-                case 7:
 
+                case 7: //SW
                 {
                     x = 0.0f;
                     y *= -step_NESW_D;

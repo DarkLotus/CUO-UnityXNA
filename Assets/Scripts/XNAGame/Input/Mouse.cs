@@ -1,4 +1,25 @@
-﻿using ClassicUO.Utility.Logging;
+﻿#region license
+
+//  Copyright (C) 2019 ClassicUO Development Community on Github
+//
+//	This project is an alternative client for the game Ultima Online.
+//	The goal of this is to develop a lightweight client considering 
+//	new technologies.  
+//      
+//  This program is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#endregion
 
 using Microsoft.Xna.Framework;
 
@@ -37,40 +58,39 @@ namespace ClassicUO.Input
 
         public static Point MDropPosition { get; set; }
 
-        public static Point LDroppedOffset;// => LButtonPressed ? RealPosition - LDropPosition : Point.Zero;
+        public static Point LDroppedOffset => LButtonPressed ? RealPosition - LDropPosition : Point.Zero;
 
-        public static Point RDroppedOffset;// => RButtonPressed ? RealPosition - RDropPosition : Point.Zero;
+        public static Point RDroppedOffset => RButtonPressed ? RealPosition - RDropPosition : Point.Zero;
 
-        public static Point MDroppedOffset;// => MButtonPressed ? RealPosition - MDropPosition : Point.Zero;
+        public static Point MDroppedOffset => MButtonPressed ? RealPosition - MDropPosition : Point.Zero;
 
         public static bool MouseInWindow { get; set; }
 
-
         public static void Begin()
         {
-           // SDL.SDL_CaptureMouse(SDL.SDL_bool.SDL_TRUE);         
+            //SDL.SDL_CaptureMouse(SDL.SDL_bool.SDL_TRUE);
         }
 
         public static void End()
         {
           //  if (!(LButtonPressed || RButtonPressed || MButtonPressed))
-           //     SDL.SDL_CaptureMouse(SDL.SDL_bool.SDL_FALSE);
+          //      SDL.SDL_CaptureMouse(SDL.SDL_bool.SDL_FALSE);
         }
 
         public static void Update()
         {
-            if ( UnityEngine.Input.mousePosition.x < 0 || UnityEngine.Input.mousePosition.y < 0 || UnityEngine.Input.mousePosition.x > UnityEngine.Screen.width || UnityEngine.Input.mousePosition.y > UnityEngine.Screen.height )
-                return;
-                _position.X = (int)UnityEngine.Input.mousePosition.x;
-            _position.Y = UnityEngine.Screen.height - ( int)UnityEngine.Input.mousePosition.y;
-
-            LButtonPressed = UnityEngine.Input.GetMouseButtonDown( 0 );
-            RButtonPressed = UnityEngine.Input.GetMouseButtonDown( 1 );
+            if (!MouseInWindow)
+            {
+              //  SDL.SDL_GetGlobalMouseState(out int x, out int y);
+             //   SDL.SDL_GetWindowPosition(Engine.Instance.Window.Handle, out int winX, out int winY);
+             //   _position.X = x - winX;
+            //    _position.Y = y - winY;
+            }
+            else
+             //   SDL.SDL_GetMouseState(out _position.X, out _position.Y);
 
             IsDragging = LButtonPressed || RButtonPressed || MButtonPressed;
-            RealPosition = Position;
-
-
+            RealPosition = _position;
         }
     }
 }

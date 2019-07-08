@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -21,74 +21,75 @@
 
 #endregion
 
+using System.Runtime.CompilerServices;
+
 using ClassicUO.Game.Data;
-using ClassicUO.Game.GameObjects.Managers;
-using ClassicUO.Game.Views;
-using ClassicUO.Interfaces;
+using ClassicUO.Game.Managers;
+using ClassicUO.IO;
 using ClassicUO.IO.Resources;
+using ClassicUO.Utility;
+
+using Microsoft.Xna.Framework;
 
 namespace ClassicUO.Game.GameObjects
 {
-    public class Static : GameObject, IDynamicItem
+    internal sealed partial class Static : GameObject
     {
-        private GameEffect _effect;
+        private StaticTiles? _itemData;
 
-        public Static(Graphic tileID, Hue hue, int index) : base(World.Map)
+        public Static(Graphic graphic, Hue hue, int index)
         {
-            Graphic = tileID;
+            Graphic = OriginalGraphic = graphic;
             Hue = hue;
-            Index = index; 
+            Index = index;
+
+            UpdateGraphicBySeason();
+
+            if (ItemData.Height > 5)
+                _canBeTransparent = 1;
+            else if (ItemData.IsRoof || ItemData.IsSurface && ItemData.IsBackground || ItemData.IsWall)
+                _canBeTransparent = 1;
+            else if (ItemData.Height == 5 && ItemData.IsSurface && !ItemData.IsBackground)
+                _canBeTransparent = 1;
+            else
+                _canBeTransparent = 0;
         }
 
         public int Index { get; }
 
         public string Name => ItemData.Name;
 
-        public StaticTiles ItemData => TileData.StaticData[Graphic];
+        public Graphic OriginalGraphic { get; }
 
-        public GameEffect Effect
+        public StaticTiles ItemData
         {
-            get => _effect;
-            set
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
             {
-                _effect?.Dispose();
-                _effect = value;
+                if (!_itemData.HasValue)
+                    _itemData = FileManager.TileData.StaticData[Graphic];
 
-                if (_effect != null)
-                {
-                    Service.Get<StaticManager>().Add(this);
-                }
+                return _itemData.Value;
             }
         }
 
-        public override void Update(double totalMS, double frameMS)
+        public void SetGraphic(Graphic g)
         {
-            base.Update(totalMS, frameMS);
-
-            if (Effect != null)
-            {
-                if (Effect.IsDisposed)
-                    Effect = null;
-                else
-                    Effect.Update(totalMS, frameMS);
-            }               
+            Graphic = g;
+            _itemData = FileManager.TileData.StaticData[Graphic];
         }
 
-        public bool IsAtWorld(int x, int y)
+        public void RestoreOriginalGraphic()
         {
-            return Position.X == x && Position.Y == y;
+            Graphic = OriginalGraphic;
+            _itemData = FileManager.TileData.StaticData[Graphic];
         }
 
-        public override void Dispose()
+        public override void UpdateGraphicBySeason()
         {
-            Effect?.Dispose();
-            Effect = null;
-            base.Dispose();
-        }
+            Graphic = Season.GetSeasonGraphic(World.Season, OriginalGraphic);
 
-        protected override View CreateView()
-        {
-            return new StaticView(this);
+            AllowedToDraw = !GameObjectHelper.IsNoDrawable(Graphic);
         }
     }
 }

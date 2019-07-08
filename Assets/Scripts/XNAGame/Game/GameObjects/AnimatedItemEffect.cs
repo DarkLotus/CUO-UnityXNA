@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -21,17 +21,15 @@
 
 #endregion
 
-using ClassicUO.Game.Views;
-
 namespace ClassicUO.Game.GameObjects
 {
-    public class AnimatedItemEffect : GameEffect
+    internal sealed partial class AnimatedItemEffect : GameEffect
     {
         public AnimatedItemEffect(Graphic graphic, Hue hue, int duration)
         {
             Graphic = graphic;
             Hue = hue;
-            Duration = duration > 0 ? CoreGame.Ticks + duration : -1;
+            Duration = duration > 0 ? Engine.Ticks + duration : -1;
             Load();
         }
 
@@ -60,16 +58,14 @@ namespace ClassicUO.Game.GameObjects
                 {
                     Mobile mob = (Mobile) source;
 
-                    if (mob != World.Player && !mob.IsMoving && (sourceX != 0 || sourceY != 0 || sourceZ != 0))
-                        mob.Position = new Position((ushort) sourceX, (ushort) sourceY, zSrc);
+                    if (mob != World.Player && !mob.IsMoving && (sourceX != 0 || sourceY != 0 || sourceZ != 0)) mob.Position = new Position((ushort) sourceX, (ushort) sourceY, zSrc);
                     SetSource(mob);
                 }
                 else if (sourceSerial.IsItem)
                 {
                     Item item = (Item) source;
+                    if (sourceX != 0 || sourceY != 0 || sourceZ != 0) item.Position = new Position((ushort) sourceX, (ushort) sourceY, zSrc);
 
-                    if (sourceX != 0 || sourceY != 0 || sourceZ != 0)
-                        item.Position = new Position((ushort) sourceX, (ushort) sourceY, zSrc);
                     SetSource(item);
                 }
                 else
@@ -79,27 +75,20 @@ namespace ClassicUO.Game.GameObjects
                 SetSource(sourceX, sourceY, sourceZ);
         }
 
-        protected override View CreateView()
-        {
-            return new AnimatedEffectView(this);
-        }
-
         public override void Update(double totalMS, double frameMS)
         {
             base.Update(totalMS, frameMS);
 
-            if (!IsDisposed)
+            if (!IsDestroyed)
             {
                 (int x, int y, int z) = GetSource();
 
-                if (Source != null)
-                    Offset = Source.Offset;
+                if (Source != null) Offset = Source.Offset;
 
                 if (Position.X != x || Position.Y != y || Position.Z != z)
                 {
-                    Position = new Position((ushort)x, (ushort)y, (sbyte)z);
-                    if (!IsItemEffect)
-                        Tile = World.Map.GetTile(x, y);
+                    Position = new Position((ushort) x, (ushort) y, (sbyte) z);
+                    AddToTile();
                 }
             }
         }

@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -29,33 +29,45 @@ namespace ClassicUO.Game.Scenes
         Game
     }
 
-    public class SceneManager
+    internal sealed class SceneManager
     {
         public Scene CurrentScene { get; private set; }
 
         public void ChangeScene(ScenesType type)
         {
-            CurrentScene?.Dispose();
+            CurrentScene?.Destroy();
             CurrentScene = null;
-            GameLoop game = Service.Get<GameLoop>();
 
             switch (type)
             {
                 case ScenesType.Login:
-                    game.WindowWidth = 640;
-                    game.WindowHeight = 480;
+                    Engine.IsMaximized = false;
+                    Engine.WindowWidth = 640;
+                    Engine.WindowHeight = 480;
+                    Engine.AllowWindowResizing = false;
                     CurrentScene = new LoginScene();
 
                     break;
+
                 case ScenesType.Game:
-                    game.WindowWidth = 1000;
-                    game.WindowHeight = 800;
+
+                    Engine.AllowWindowResizing = true;
+                    Engine.SetPreferredBackBufferSize(Engine.Profile.Current.WindowClientBounds.X, Engine.Profile.Current.WindowClientBounds.Y);
+
+                    if (!Engine.Profile.Current.RestoreLastGameSize)
+                        Engine.IsMaximized = true;
+                    else
+                    {
+                        Engine.WindowWidth = Engine.Profile.Current.WindowClientBounds.X;
+                        Engine.WindowHeight = Engine.Profile.Current.WindowClientBounds.Y;
+                    }
+
                     CurrentScene = new GameScene();
 
                     break;
             }
 
-            CurrentScene.Load();
+            CurrentScene?.Load();
         }
 
         public T GetScene<T>() where T : Scene

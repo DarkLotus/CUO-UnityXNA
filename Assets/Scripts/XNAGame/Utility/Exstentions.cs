@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -25,25 +25,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 using Microsoft.Xna.Framework;
 
 namespace ClassicUO.Utility
 {
-    public static class Exstentions
+    internal static class Exstentions
     {
-        //public static void Merge(this Vector3 v, float x, float y, float z)
-        //{
-        //    float newX = v.Y * z - v.Z * y;
-        //    float newY = v.Z * x - v.X * z;
-        //    float newZ = v.X * y - v.Y * x;
-
-        //    v.X = newX;
-        //    v.Y = newY;
-        //    v.Z = newZ;
-        //}
-
         public static void Raise(this EventHandler handler, object sender = null)
         {
             handler?.Invoke(sender, EventArgs.Empty);
@@ -77,7 +67,7 @@ namespace ClassicUO.Utility
                         using (StreamWriter txt = new StreamWriter("crash.log", true))
                         {
                             txt.AutoFlush = true;
-                            txt.WriteLine("Exception @ {0}", DateTime.Now.ToString("MM-dd-yy HH:mm:ss.ffff"));
+                            txt.WriteLine("Exception @ {0}", Engine.CurrDateTime.ToString("MM-dd-yy HH:mm:ss.ffff"));
                             txt.WriteLine(e.ToString());
                             txt.WriteLine("");
                             txt.WriteLine("");
@@ -111,7 +101,7 @@ namespace ClassicUO.Utility
             foreach (T c in array) func(c);
         }
 
-        public static bool InRect(this Rectangle rect, Rectangle r)
+        public static bool InRect(ref Rectangle rect, ref Rectangle r)
         {
             bool inrect = false;
 
@@ -128,12 +118,39 @@ namespace ClassicUO.Utility
 
             if (inrect)
             {
-                if (rect.Y < r.Y) inrect = r.Y < rect.Bottom;
+                if (rect.Y < r.Y)
+                    inrect = r.Y < rect.Bottom;
+                else
+                    inrect = rect.Y < r.Bottom;
             }
-            else
-                inrect = rect.Y < r.Bottom;
 
             return inrect;
+        }
+
+        public static string MakeSafe(this string s)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (StringHelper.IsSafeChar(s[i]))
+                    sb.Append(s[i]);
+            }
+
+            return sb.ToString();
+        }
+
+        public static string ReadUTF8String(this BinaryReader reader, int length)
+        {
+            byte[] data = new byte[length];
+            reader.Read(data, 0, length);
+
+            return Encoding.UTF8.GetString(data);
+        }
+
+        public static void WriteUTF8String(this BinaryWriter writer, string str)
+        {
+            writer.Write(Encoding.UTF8.GetBytes(str));
         }
     }
 }

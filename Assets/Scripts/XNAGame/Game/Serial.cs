@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -26,10 +26,10 @@ using System.Globalization;
 
 namespace ClassicUO.Game
 {
-    public struct Serial : IComparable, IComparable<uint>
+    internal readonly struct Serial : IComparable<uint>
     {
-        public static readonly Serial Invalid = new Serial(0);
-        public static readonly Serial MinusOne = new Serial(0xFFFFFFFF);
+        public const uint INVALID = 0;
+        public const uint MINUS_ONE = 0xFFFF_FFFF;
 
         public Serial(uint serial)
         {
@@ -74,11 +74,6 @@ namespace ClassicUO.Game
             return s1.Value > s2.Value;
         }
 
-        public int CompareTo(object obj)
-        {
-            return Value.CompareTo(obj);
-        }
-
         public int CompareTo(uint other)
         {
             return Value.CompareTo(other);
@@ -86,7 +81,7 @@ namespace ClassicUO.Game
 
         public override string ToString()
         {
-            return string.Format("0x{0:X8}", Value);
+            return $"0x{Value:X8}";
         }
 
         public override int GetHashCode()
@@ -96,15 +91,23 @@ namespace ClassicUO.Game
 
         public override bool Equals(object obj)
         {
-            if (obj is Serial) return this == (Serial) obj;
-            if (obj is uint) return Value == (uint) obj;
+            if (obj == null) return false;
 
-            return false;
+            return obj is Serial other && Equals(other);
+        }
+
+        public bool Equals(Serial other)
+        {
+            return Value == other.Value;
         }
 
         public static Serial Parse(string str)
         {
-            if (str.StartsWith("0x")) return uint.Parse(str.Remove(0, 2), NumberStyles.HexNumber);
+            if (str.StartsWith("0x"))
+                return uint.Parse(str.Remove(0, 2), NumberStyles.HexNumber);
+
+            if (str.Length > 1 && str[0] == '-')
+                return (uint) int.Parse(str);
 
             return uint.Parse(str);
         }

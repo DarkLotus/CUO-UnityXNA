@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -21,41 +21,79 @@
 
 #endregion
 
-using System.Collections.Generic;
-
 using ClassicUO.Game.GameObjects;
-using ClassicUO.IO.Resources;
 
 namespace ClassicUO.Game.Map
 {
-    public static class TileSorter
+    internal static class TileSorter
     {
-        public static void Sort(List<GameObject> objects)
+        // https://www.geeksforgeeks.org/merge-sort-for-doubly-linked-list/
+
+        public static GameObject Sort(GameObject first)
         {
-            for (int i = 0; i < objects.Count - 1; i++)
-            {
-                int j = i + 1;
-
-                while (j > 0)
-                {
-                    int result = Compare(objects[j - 1], objects[j]);
-
-                    if (result > 0)
-                    {
-                        GameObject temp = objects[j - 1];
-                        objects[j - 1] = objects[j];
-                        objects[j] = temp;
-                    }
-
-                    j--;
-                }
-            }
+            return MergeSort(first);
         }
+
+        private static GameObject Merge(GameObject first, GameObject second)
+        {
+            if (first == null)
+                return second;
+
+            if (second == null)
+                return first;
+
+            if (Compare(first, second) <= 0)
+            {
+                first.Right = Merge(first.Right, second);
+                first.Right.Left = first;
+                first.Left = null;
+
+                return first;
+            }
+
+            second.Right = Merge(first, second.Right);
+            second.Right.Left = second;
+            second.Left = null;
+
+            return second;
+        }
+
+        private static GameObject MergeSort(GameObject head)
+        {
+            if (head?.Right == null)
+                return head;
+
+            GameObject second = Split(head);
+
+            head = MergeSort(head);
+            second = MergeSort(second);
+
+            return Merge(head, second);
+        }
+
+        private static GameObject Split(GameObject head)
+        {
+            GameObject fast = head;
+            GameObject slow = head;
+
+            while (fast.Right?.Right != null)
+            {
+                fast = fast.Right.Right;
+                slow = slow.Right;
+            }
+
+            GameObject temp = slow.Right;
+            slow.Right = null;
+
+            return temp;
+        }
+
 
         private static int Compare(GameObject x, GameObject y)
         {
             (int xZ, int xType, int xThreshold, int xTierbreaker) = GetSortValues(x);
             (int yZ, int yType, int yThreshold, int yTierbreaker) = GetSortValues(y);
+
             xZ += xThreshold;
             yZ += yThreshold;
             int comparison = xZ - yZ;
@@ -68,10 +106,9 @@ namespace ClassicUO.Game.Map
 
             if (comparison == 0)
                 comparison = xTierbreaker - yTierbreaker;
-#if ORIONSORT
+
             if (comparison == 0)
                 comparison = x.PriorityZ - y.PriorityZ;
-#endif
 
             return comparison;
         }
@@ -82,22 +119,28 @@ namespace ClassicUO.Game.Map
             {
                 case GameEffect effect:
 
-                    return (effect.Position.Z, effect.IsItemEffect ? 2 : 4, 2, 0);
-                case DeferredEntity def:
+                    return (effect.Z, effect.IsItemEffect ? 2 : 4, 2, 0);
 
-                    return (def.Position.Z, 2, 1, 0);
                 case Mobile mobile:
 
-                    return (mobile.Position.Z, 3 /* is sitting */, 2, mobile == World.Player ? 0x40000000 : (int) mobile.Serial.Value);
-                case Tile tile:
+                    return (mobile.Z, 3 /* is sitting */, 2, mobile == World.Player ? 0x40000000 : (int) mobile.Serial.Value);
+
+                case Land tile:
 
                     return (tile.AverageZ, 0, 0, 0);
+
+                case Multi multi:
+
+                    return (multi.Z, 1, (multi.ItemData.Height > 0 ? 1 : 0) + (multi.ItemData.IsBackground ? 0 : 1), 0);
+
                 case Static staticitem:
 
-                    return (staticitem.Position.Z, 1, (staticitem.ItemData.Height > 0 ? 1 : 0) + (TileData.IsBackground((long) staticitem.ItemData.Flags) ? 0 : 1), staticitem.Index);
+                    return (staticitem.Z, 1, (staticitem.ItemData.Height > 0 ? 1 : 0) + (staticitem.ItemData.IsBackground ? 0 : 1), staticitem.Index);
+
                 case Item item:
 
-                    return (item.Position.Z, item.IsCorpse ? 4 : 2, (item.ItemData.Height > 0 ? 1 : 0) + (TileData.IsBackground((long) item.ItemData.Flags) ? 0 : 1), (int) item.Serial.Value);
+                    return (item.Z, item.IsCorpse ? 4 : 2, (item.ItemData.Height > 0 ? 1 : 0) + (item.ItemData.IsBackground ? 0 : 1), (int) item.Serial.Value);
+
                 default:
 
                     return (0, 0, 0, 0);

@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -22,16 +22,18 @@
 #endregion
 
 using System.IO;
+using System.Text.RegularExpressions;
 
 using ClassicUO.Utility.Logging;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace ClassicUO.Configuration
 {
-    public static class ConfigurationResolver
+    internal static class ConfigurationResolver
     {
-        public static T Load<T>(string file) where T : class
+        public static T Load<T>(string file, JsonSerializerSettings jsonsettings = null) where T : class
         {
             if (!File.Exists(file))
             {
@@ -40,14 +42,21 @@ namespace ClassicUO.Configuration
                 return null;
             }
 
-            T settings = JsonConvert.DeserializeObject<T>(File.ReadAllText(file));
+            string text = File.ReadAllText(file);
+            text = Regex.Replace(text,
+                                         @"(?<!\\)  # lookbehind: Check that previous character isn't a \
+                                                \\         # match a \
+                                                (?!\\)     # lookahead: Check that the following character isn't a \",
+                                    @"\\", RegexOptions.IgnorePatternWhitespace);
+
+            T settings = JsonConvert.DeserializeObject<T>(text, jsonsettings);
 
             return settings;
         }
 
-        public static void Save<T>(T obj, string file) where T : class
+        public static void Save<T>(T obj, string file, JsonSerializerSettings jsonsettings = null) where T : class
         {
-            string t = JsonConvert.SerializeObject(obj, Formatting.Indented);
+            string t = JsonConvert.SerializeObject(obj, Formatting.Indented, jsonsettings);
             File.WriteAllText(file, t);
         }
     }

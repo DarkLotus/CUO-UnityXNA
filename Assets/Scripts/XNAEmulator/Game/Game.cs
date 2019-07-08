@@ -44,7 +44,8 @@ namespace Microsoft.Xna.Framework
         {
             content = new ContentManager(null, "");
 			
-			_components = new GameComponentCollection();	
+			_components = new GameComponentCollection();
+			//Initialize();
         }
 
         protected virtual void Update(GameTime gameTime)
@@ -130,5 +131,9 @@ namespace Microsoft.Xna.Framework
         }
 
 
-    }
+        protected virtual void Initialize()
+        {
+	        //throw new NotImplementedException();
+        }
+	}
 }

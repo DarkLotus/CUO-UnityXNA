@@ -1,221 +1,522 @@
-﻿using System;
-using System.Collections.Generic;
+﻿#region license
 
+//  Copyright (C) 2019 ClassicUO Development Community on Github
+//
+//	This project is an alternative client for the game Ultima Online.
+//	The goal of this is to develop a lightweight client considering 
+//	new technologies.  
+//      
+//  This program is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#endregion
+
+using System;
+
+using ClassicUO.Game.Data;
 using ClassicUO.Game.GameObjects;
+using ClassicUO.Game.Managers;
 using ClassicUO.Game.Map;
-using ClassicUO.Interfaces;
+using ClassicUO.IO;
 using ClassicUO.IO.Resources;
+using ClassicUO.Utility;
 
 using Microsoft.Xna.Framework;
 
 namespace ClassicUO.Game.Scenes
 {
-    partial class GameScene
+    internal partial class GameScene
     {
-        private static void CheckIfUnderEntity(out int maxItemZ, out bool drawTerrain, out bool underSurface)
-        {
-            maxItemZ = 255;
-            drawTerrain = true;
-            underSurface = false;
-            Tile tile = World.Map.GetTile(World.Map.Center.X, World.Map.Center.Y);
-
-            if (tile != null && tile.IsZUnderObjectOrGround(World.Player.Position.Z, out GameObject underObject, out GameObject underGround))
-            {
-                drawTerrain = underGround == null;
-
-                if (underObject != null)
-                {
-                    if (underObject is IDynamicItem item)
-                    {
-                        if (TileData.IsRoof((long) item.ItemData.Flags))
-                            maxItemZ = World.Player.Position.Z - World.Player.Position.Z % 20 + 20;
-                        else if (TileData.IsSurface((long) item.ItemData.Flags) || TileData.IsWall((long) item.ItemData.Flags) && !TileData.IsDoor((long) item.ItemData.Flags))
-                            maxItemZ = item.Position.Z;
-                        else
-                        {
-                            int z = World.Player.Position.Z + (item.ItemData.Height > 20 ? item.ItemData.Height : 20);
-                            maxItemZ = z;
-                        }
-                    }
-
-                    if (underObject is IDynamicItem sta && TileData.IsRoof((long) sta.ItemData.Flags))
-                    {
-                        bool isRoofSouthEast = true;
-
-                        if ((tile = World.Map.GetTile(World.Map.Center.X + 1, World.Map.Center.Y)) != null)
-                        {
-                            tile.IsZUnderObjectOrGround(World.Player.Position.Z, out underObject, out underGround);
-                            isRoofSouthEast = underObject != null;
-                        }
-
-                        if (!isRoofSouthEast)
-                            maxItemZ = 255;
-                    }
-
-                    underSurface = maxItemZ != 255;
-                }
-            }
-        }
-
-#if !ORIONSORT
-        private void ClearDeferredEntities()
-        {
-            if (_deferredToRemove.Count > 0)
-            {
-                foreach (DeferredEntity def in _deferredToRemove)
-                {
-                    def.Reset();
-                    def.AssociatedTile.RemoveGameObject(def);
-                }
-
-                _deferredToRemove.Clear();
-            }
-        }
-#endif
-#if ORIONSORT
-        private int _renderIndex = 1;
-        private int _renderListCount;
-        private GameObject[] _renderList = new GameObject[2000];
-        private Point _offset, _maxTile, _minTile;
-        private Vector2 _minPixel, _maxPixel;
+        private sbyte _maxGroundZ;
         private int _maxZ;
-        private bool _drawTerrain;
-        private bool _updateDrawPosition;
+        private Vector2 _minPixel, _maxPixel;
+        private bool _noDrawRoofs;
+        private int _objectHandlesCount;
+        //private WeakReference<GameObject>[] _renderList = new WeakReference<GameObject>[2000];
 
-        private void AddTileToRenderList(IReadOnlyList<GameObject> objList, int worldX, int worldY, bool useObjectHandles, int maxZ)
+
+        private Point _offset, _maxTile, _minTile;
+        private int _oldPlayerX, _oldPlayerY, _oldPlayerZ;
+
+        private int _renderIndex = 1;
+
+        private GameObject[] _renderList = new GameObject[2000];
+        private int _renderListCount;
+
+        public void UpdateMaxDrawZ(bool force = false)
         {
-            for (int i = 0; i < objList.Count; i++)
-            {
-                GameObject obj = objList[i];
+            int playerX = World.Player.X;
+            int playerY = World.Player.Y;
+            int playerZ = World.Player.Z;
 
-                if (obj.CurrentRenderIndex == _renderIndex || obj.IsDisposed)
+            if (playerX == _oldPlayerX && playerY == _oldPlayerY && playerZ == _oldPlayerZ && !force)
+                return;
+
+            _oldPlayerX = playerX;
+            _oldPlayerY = playerY;
+            _oldPlayerZ = playerZ;
+
+            sbyte maxGroundZ = 127;
+            _maxGroundZ = 127;
+            _maxZ = 127;
+            _noDrawRoofs = !Engine.Profile.Current.DrawRoofs;
+            int bx = playerX;
+            int by = playerY;
+            Tile tile = World.Map.GetTile(bx, by, false);
+
+            if (tile != null)
+            {
+                int pz14 = playerZ + 14;
+                int pz16 = playerZ + 16;
+
+                GameObject obj = tile.FirstNode;
+
+                while (obj.Left != null)
+                    obj = obj.Left;
+
+                for (; obj != null; obj = obj.Right)
+                {
+                    sbyte tileZ = obj.Z;
+
+                    if (obj is Land)
+                    {
+                        if (pz16 <= tileZ)
+                        {
+                            maxGroundZ = (sbyte) pz16;
+                            _maxGroundZ = (sbyte) pz16;
+                            _maxZ = _maxGroundZ;
+
+                            break;
+                        }
+
+                        continue;
+                    }
+
+                    if (obj is Mobile)
+                        continue;
+
+
+                    //if (obj is Item it && !it.ItemData.IsRoof || !(obj is Static) && !(obj is Multi))
+                    //    continue;
+
+                    if (tileZ > pz14 && _maxZ > tileZ)
+                    {
+                        if (GameObjectHelper.TryGetStaticData(obj, out var itemdata) && ((ulong) itemdata.Flags & 0x20004) == 0 && (!itemdata.IsRoof || itemdata.IsSurface))
+                        {
+                            _maxZ = tileZ;
+                            _noDrawRoofs = true;
+                        }
+                    }
+                }
+
+                int tempZ = _maxZ;
+                _maxGroundZ = (sbyte) _maxZ;
+                playerX++;
+                playerY++;
+                bx = playerX;
+                by = playerY;
+                tile = World.Map.GetTile(bx, by, false);
+
+                if (tile != null)
+                {
+                    GameObject obj2 = tile.FirstNode;
+
+                    while (obj2.Left != null)
+                        obj2 = obj2.Left;
+
+                    for (; obj2 != null; obj2 = obj2.Right)
+                    {
+                        //if (obj is Item it && !it.ItemData.IsRoof || !(obj is Static) && !(obj is Multi))
+                        //    continue;
+
+                        if (obj2 is Mobile)
+                            continue;
+
+                        sbyte tileZ = obj2.Z;
+
+                        if (tileZ > pz14 && _maxZ > tileZ)
+                        {
+                            if (GameObjectHelper.TryGetStaticData(obj2, out var itemdata) && ((ulong) itemdata.Flags & 0x204) == 0 && itemdata.IsRoof)
+                            {
+                                _maxZ = tileZ;
+                                World.Map.ClearBockAccess();
+                                _maxGroundZ = World.Map.CalculateNearZ(tileZ, playerX, playerY, tileZ);
+                                _noDrawRoofs = true;
+                            }
+                        }
+                    }
+
+                    tempZ = _maxGroundZ;
+                }
+
+                _maxZ = _maxGroundZ;
+
+                if (tempZ < pz16)
+                {
+                    _maxZ = pz16;
+                    _maxGroundZ = (sbyte) pz16;
+                }
+
+                _maxGroundZ = maxGroundZ;
+            }
+        }
+
+        private static readonly StaticTiles _emptyStaticTiles = default;
+
+        private void AddTileToRenderList(GameObject obj, int worldX, int worldY, bool useObjectHandles, int maxZ)
+        {
+            for (; obj != null; obj = obj.Right)
+            {
+                if (obj.CurrentRenderIndex == _renderIndex || !obj.AllowedToDraw)
                     continue;
 
-                if (_updateDrawPosition && obj.CurrentRenderIndex != _renderIndex || obj.IsPositionChanged)
+                if (UpdateDrawPosition && obj.CurrentRenderIndex != _renderIndex || obj.IsPositionChanged)
                     obj.UpdateRealScreenPosition(_offset);
-                obj.UseInRender = 0xFF;
-                int drawX = (int) obj.RealScreenPosition.X;
-                int drawY = (int) obj.RealScreenPosition.Y;
+
+                //obj.UseInRender = 0xFF;
+
+                int drawX = obj.RealScreenPosition.X;
+                int drawY = obj.RealScreenPosition.Y;
 
                 if (drawX < _minPixel.X || drawX > _maxPixel.X)
                     break;
-                int z = obj.Position.Z;
+
                 int maxObjectZ = obj.PriorityZ;
+
+                bool ismobile = false;
+
+                StaticTiles itemData = _emptyStaticTiles;
+                bool changinAlpha = false;
+                bool island = false;
 
                 switch (obj)
                 {
                     case Mobile _:
-                        maxObjectZ += 16;
+                        maxObjectZ += Constants.DEFAULT_CHARACTER_HEIGHT;
+                        ismobile = true;
 
                         break;
-                    case IDynamicItem dyn:
-                        maxObjectZ += dyn.ItemData.Height;
+
+                    case Land _:
+                        island = true;
+                        break;
+
+                    default:
+
+                        if (GameObjectHelper.TryGetStaticData(obj, out itemData))
+                        {
+                            if (obj is Static st)
+                            {
+                                if (StaticFilters.IsTree(st.OriginalGraphic))
+                                {
+                                    if (Engine.Profile.Current.TreeToStumps && st.Graphic != Constants.TREE_REPLACE_GRAPHIC)
+                                        st.SetGraphic(Constants.TREE_REPLACE_GRAPHIC);
+                                    else if (st.OriginalGraphic != st.Graphic && !Engine.Profile.Current.TreeToStumps)
+                                        st.RestoreOriginalGraphic();
+                                }
+                            }
+
+                            if (_noDrawRoofs && itemData.IsRoof)
+                            {
+                                if (_alphaChanged)
+                                    changinAlpha = obj.ProcessAlpha(0);
+                                else
+                                    changinAlpha = obj.AlphaHue != 0;
+
+
+                                if (!changinAlpha)
+                                    continue;
+                            }
+
+                            if (Engine.Profile.Current.TreeToStumps && itemData.IsFoliage || Engine.Profile.Current.HideVegetation && StaticFilters.IsVegetation(obj.Graphic))
+                                continue;
+
+                            maxObjectZ += itemData.Height;
+                        }
 
                         break;
                 }
 
                 if (maxObjectZ > maxZ)
                     break;
+
                 obj.CurrentRenderIndex = _renderIndex;
 
-                if (!(obj is Tile) && (z >= _maxZ || obj is IDynamicItem dyn2 && (TileData.IsInternal((long) dyn2.ItemData.Flags) || _maxZ != 255 && TileData.IsRoof((long) dyn2.ItemData.Flags))))
+                bool iscorpse = !ismobile && !island && obj is Item item && item.IsCorpse;
+
+                if (!ismobile && !iscorpse && !island && itemData.IsInternal)
                     continue;
-                int testMinZ = drawY + z * 4;
+
+                int z = obj.Z;
+
+                if (!island && z >= _maxZ)
+                {
+                    if (!changinAlpha)
+                    {
+                        if (_alphaChanged)
+                            changinAlpha = obj.ProcessAlpha(0);
+                        else
+                            changinAlpha = obj.AlphaHue != 0;
+
+                        if (!changinAlpha)
+                            continue;
+                    }
+                }
+
+                int testMinZ = drawY + (z << 2);
                 int testMaxZ = drawY;
 
-                if (obj is Tile t && t.IsStretched)
-                    testMinZ -= t.MinZ * 4;
+                if (island)
+                {
+                    Land t = obj as Land;
+
+                    if (t.IsStretched)
+                        testMinZ -= t.MinZ << 2;
+                    else
+                        testMinZ = testMaxZ;
+                }
                 else
                     testMinZ = testMaxZ;
 
                 if (testMinZ < _minPixel.Y || testMaxZ > _maxPixel.Y)
                     continue;
 
-                switch (obj)
+
+                if (obj.OverheadMessageContainer != null && !obj.OverheadMessageContainer.IsEmpty)
+                    Overheads.AddOverhead(obj.OverheadMessageContainer);
+
+                if (ismobile || iscorpse)
+                    AddOffsetCharacterTileToRenderList(obj, useObjectHandles);
+                else if (!island && itemData.IsFoliage)
                 {
-                    case Mobile mob:
-                        AddOffsetCharacterTileToRenderList(mob, useObjectHandles);
+                    bool check = World.Player.X <= worldX && World.Player.Y <= worldY;
 
-                        break;
-                    case Item item when item.IsCorpse:
-                        AddOffsetCharacterTileToRenderList(item, useObjectHandles);
+                    if (!check)
+                    {
+                        check = World.Player.Y <= worldY && World.Player.X <= worldX + 1;
 
-                        break;
+                        if (!check)
+                            check = World.Player.X <= worldX && World.Player.Y <= worldY + 1;
+                    }
+
+                    if (check)
+                    {
+                        _rectangleObj.X = drawX - obj.FrameInfo.X;
+                        _rectangleObj.Y = drawY - obj.FrameInfo.Y;
+                        _rectangleObj.Width = obj.FrameInfo.Width;
+                        _rectangleObj.Height = obj.FrameInfo.Height;
+
+                        check = Exstentions.InRect(ref _rectangleObj, ref _rectanglePlayer);
+                    }
+
+                    switch (obj)
+                    {
+                        case Static st:
+                            st.CharacterIsBehindFoliage = check;
+
+                            break;
+
+                        case Multi m:
+                            m.CharacterIsBehindFoliage = check;
+
+                            break;
+
+                        case Item it:
+                            it.CharacterIsBehindFoliage = check;
+
+                            break;
+                    }
+                }
+
+                if (_alphaChanged && !changinAlpha)
+                {
+                    if (itemData.IsTranslucent)
+                        obj.ProcessAlpha(178);
+                    else if (!itemData.IsFoliage && obj.AlphaHue != 0xFF)
+                        obj.ProcessAlpha(0xFF);
                 }
 
                 if (_renderListCount >= _renderList.Length)
                 {
                     int newsize = _renderList.Length + 1000;
+                    //_renderList.Resize(newsize);
                     Array.Resize(ref _renderList, newsize);
                 }
 
+
+                if (useObjectHandles && NameOverHeadManager.IsAllowed(obj as Entity))
+                {
+                    obj.UseObjectHandles = (ismobile ||
+                                            iscorpse ||
+                                            obj is Item it && (!it.IsLocked || it.IsLocked && itemData.IsContainer) && !it.IsMulti) &&
+                                           !obj.ClosedObjectHandles && _objectHandlesCount <= 400;
+                    _objectHandlesCount++;
+                }
+                else if (obj.ClosedObjectHandles)
+                {
+                    obj.ClosedObjectHandles = false;
+                    obj.ObjectHandlesOpened = false;
+                }
+                else if (obj.UseObjectHandles)
+                {
+                    obj.ObjectHandlesOpened = false;
+                    obj.UseObjectHandles = false;
+                }
+
+                //ref var weak = ref _renderList[_renderListCount];
+
+                //if (weak == null)
+                //    weak = new WeakReference<GameObject>(obj);
+                //else
+                //    weak.SetTarget(obj);
+
                 _renderList[_renderListCount] = obj;
-                obj.UseInRender = (byte) _renderIndex;
+                //_renderList.Enqueue(obj);
+                //obj.UseInRender = (byte) _renderIndex;
                 _renderListCount++;
             }
         }
 
-        private void AddOffsetCharacterTileToRenderList(Entity entity, bool useObjectHandles)
-        {
-            int charX = entity.Position.X;
-            int charY = entity.Position.Y;
-            Mobile mob = World.Mobiles.Get(entity);
-            int dropMaxZIndex = -1;
 
-            if (mob != null && mob.IsMoving && mob.Steps.Back().Direction == 2)
-                dropMaxZIndex = 0;
-            int[,] coordinates = new int[8, 2];
-            coordinates[0, 0] = charX + 1;
-            coordinates[0, 1] = charY - 1;
-            coordinates[1, 0] = charX + 1;
-            coordinates[1, 1] = charY - 2;
-            coordinates[2, 0] = charX + 2;
-            coordinates[2, 1] = charY - 2;
-            coordinates[3, 0] = charX - 1;
-            coordinates[3, 1] = charY + 2;
-            coordinates[4, 0] = charX;
-            coordinates[4, 1] = charY + 1;
-            coordinates[5, 0] = charX + 1;
-            coordinates[5, 1] = charY;
-            coordinates[6, 0] = charX + 2;
-            coordinates[6, 1] = charY - 1;
-            coordinates[7, 0] = charX + 1;
-            coordinates[7, 1] = charY + 1;
+
+        private void AddOffsetCharacterTileToRenderList(GameObject entity, bool useObjectHandles)
+        {
+            int charX = entity.X;
+            int charY = entity.Y;
             int maxZ = entity.PriorityZ;
+            byte dir = byte.MaxValue;
+
+            if (entity is Mobile mob)
+            {
+                if (mob.IsMoving)
+                {
+                    dir = mob.Steps.Back().Direction;
+                    if (dir > 0 && dir < 6)
+                        maxZ += 20;
+                }
+            }
+
+            for(int i = 0, max = (dir == 3 ? 4 : 3); i < max; i++)
+            {
+                int x, y;
+                switch (i)
+                {
+                    case 0:
+                        x = charX + 1;
+                        y = charY - 1;
+                        break;
+                    case 1:
+                        x = charX;
+                        y = charY + 1;
+                        break;
+                    case 2:
+                        x = charX + 1;
+                        y = charY;
+                        break;
+                    case 3:
+                        x = charX + 1;
+                        y = charY + 1;
+                        break;
+                    default:
+                        continue;
+                }
+                if (x < _minTile.X || x > _maxTile.X || y < _minTile.Y || y > _maxTile.Y)
+                    continue;
+
+                Tile tile = World.Map.GetTile(x, y);
+
+                AddTileToRenderList(tile.FirstNode, x, y, useObjectHandles, maxZ);
+            }
+
+            /*int dropMaxZIndex = -1;
+
+            if (entity is Mobile mob && mob.IsMoving && mob.Steps.Back().Direction == 2)
+                dropMaxZIndex = 0;
+
+            int maxZ = entity.PriorityZ;
+
 
             for (int i = 0; i < 8; i++)
             {
-                int x = coordinates[i, 0];
-                int y = coordinates[i, 1];
+                int x, y;
 
+                switch (i)
+                {
+                    case 0:
+                        x = charX + 1;
+                        y = charY - 1;
+                        break;
+                    case 1:
+                        x = charX + 1;
+                        y = charY - 2;
+                        break;
+                    case 2:
+                        x = charX + 2;
+                        y = charY - 2;
+                        break;
+                    case 3:
+                        x = charX - 1;
+                        y = charY + 2;
+                        break;
+                    case 4:
+                        x = charX;
+                        y = charY + 1;
+                        break;
+                    case 5:
+                        x = charX + 1;
+                        y = charY;
+                        break;
+                    case 6:
+                        x = charX + 2;
+                        y = charY - 1;
+                        break;
+                    case 7:
+                        x = charX + 1;
+                        y = charY + 1;
+                        break;
+                    default:
+                        continue;
+                }
+
+             
                 if (x < _minTile.X || x > _maxTile.X || y < _minTile.Y || y > _maxTile.Y)
                     continue;
+
                 Tile tile = World.Map.GetTile(x, y);
 
-                if (tile == null)
-                    continue;
                 int currentMaxZ = maxZ;
 
                 if (i == dropMaxZIndex)
                     currentMaxZ += 20;
-                AddTileToRenderList(tile.ObjectsOnTiles, x, y, useObjectHandles, currentMaxZ);
-            }
+
+                AddTileToRenderList(tile.FirstNode, x, y, useObjectHandles, currentMaxZ);
+            }*/
         }
 
-        private (Point, Point, Vector2, Vector2, Point, Point, Point, int) GetViewPort()
+        private void GetViewPort()
         {
             int oldDrawOffsetX = _offset.X;
             int oldDrawOffsetY = _offset.Y;
             int winGamePosX = 0;
             int winGamePosY = 0;
-            int winGameWidth = _settings.GameWindowWidth;
-            int winGameHeight = _settings.GameWindowHeight;
-            int winGameCenterX = winGamePosX + winGameWidth / 2;
-            int winGameCenterY = winGamePosY + winGameHeight / 2 + World.Player.Position.Z * 4;
+            int winGameWidth = Engine.Profile.Current.GameWindowSize.X;
+            int winGameHeight = Engine.Profile.Current.GameWindowSize.Y;
+            int winGameCenterX = winGamePosX + (winGameWidth >> 1);
+            int winGameCenterY = winGamePosY + (winGameHeight >> 1) + World.Player.Z * 4;
             winGameCenterX -= (int) World.Player.Offset.X;
             winGameCenterY -= (int) (World.Player.Offset.Y - World.Player.Offset.Z);
-            int winDrawOffsetX = (World.Player.Position.X - World.Player.Position.Y) * 22 - winGameCenterX;
-            int winDrawOffsetY = (World.Player.Position.X + World.Player.Position.Y) * 22 - winGameCenterY;
+            int winDrawOffsetX = (World.Player.X - World.Player.Y) * 22 - winGameCenterX;
+            int winDrawOffsetY = (World.Player.X + World.Player.Y) * 22 - winGameCenterY;
             float left = winGamePosX;
             float right = winGameWidth + left;
             float top = winGamePosY;
@@ -229,30 +530,39 @@ namespace ClassicUO.Game.Scenes
             int width = (int) ((winGameWidth / 44 + 1) * Scale);
             int height = (int) ((winGameHeight / 44 + 1) * Scale);
 
-            if (width < height)
-                width = height;
-            else
-                height = width;
-            int realMinRangeX = World.Player.Position.X - width;
+            winDrawOffsetX += winGameScaledOffsetX >> 1;
+            winDrawOffsetY += winGameScaledOffsetY >> 1;
+
+            const int MAX = 70;
+
+            if (width > MAX)
+                width = MAX;
+
+            if (height > MAX)
+                height = MAX;
+
+            int size = Math.Max(width, height);
+
+            int realMinRangeX = World.Player.X - size;
 
             if (realMinRangeX < 0)
                 realMinRangeX = 0;
-            int realMaxRangeX = World.Player.Position.X + width;
+            int realMaxRangeX = World.Player.X + size;
 
-            if (realMaxRangeX >= IO.Resources.Map.MapsDefaultSize[World.Map.Index][0])
-                realMaxRangeX = IO.Resources.Map.MapsDefaultSize[World.Map.Index][0];
-            int realMinRangeY = World.Player.Position.Y - height;
+            //if (realMaxRangeX >= FileManager.Map.MapsDefaultSize[World.Map.Index][0])
+            //    realMaxRangeX = FileManager.Map.MapsDefaultSize[World.Map.Index][0];
+            int realMinRangeY = World.Player.Y - size;
 
             if (realMinRangeY < 0)
                 realMinRangeY = 0;
-            int realMaxRangeY = World.Player.Position.Y + height;
+            int realMaxRangeY = World.Player.Y + size;
 
-            if (realMaxRangeY >= IO.Resources.Map.MapsDefaultSize[World.Map.Index][1])
-                realMaxRangeY = IO.Resources.Map.MapsDefaultSize[World.Map.Index][1];
-            int minBlockX = realMinRangeX / 8 - 1;
-            int minBlockY = realMinRangeY / 8 - 1;
-            int maxBlockX = realMaxRangeX / 8 + 1;
-            int maxBlockY = realMaxRangeY / 8 + 1;
+            //if (realMaxRangeY >= FileManager.Map.MapsDefaultSize[World.Map.Index][1])
+            //    realMaxRangeY = FileManager.Map.MapsDefaultSize[World.Map.Index][1];
+            int minBlockX = (realMinRangeX >> 3) - 1;
+            int minBlockY = (realMinRangeY >> 3) - 1;
+            int maxBlockX = (realMaxRangeX >> 3) + 1;
+            int maxBlockY = (realMaxRangeY >> 3) + 1;
 
             if (minBlockX < 0)
                 minBlockX = 0;
@@ -260,82 +570,38 @@ namespace ClassicUO.Game.Scenes
             if (minBlockY < 0)
                 minBlockY = 0;
 
-            if (maxBlockX >= IO.Resources.Map.MapsDefaultSize[World.Map.Index][0])
-                maxBlockX = IO.Resources.Map.MapsDefaultSize[World.Map.Index][0] - 1;
+            if (maxBlockX >= FileManager.Map.MapsDefaultSize[World.Map.Index, 0])
+                maxBlockX = FileManager.Map.MapsDefaultSize[World.Map.Index, 0] - 1;
 
-            if (maxBlockY >= IO.Resources.Map.MapsDefaultSize[World.Map.Index][1])
-                maxBlockY = IO.Resources.Map.MapsDefaultSize[World.Map.Index][1] - 1;
-            int drawOffset = (int) (Scale * 40.0f);
+            if (maxBlockY >= FileManager.Map.MapsDefaultSize[World.Map.Index, 1])
+                maxBlockY = FileManager.Map.MapsDefaultSize[World.Map.Index, 1] - 1;
+            int drawOffset = (int) (Scale * 40.0);
             float maxX = winGamePosX + winGameWidth + drawOffset;
             float maxY = winGamePosY + winGameHeight + drawOffset;
             float newMaxX = maxX * Scale;
             float newMaxY = maxY * Scale;
-            int minPixelsX = (int) ((winGamePosX - drawOffset) * Scale - (newMaxX - maxX));
+            int minPixelsX = (int) ((winGamePosX - drawOffset) * Scale - (newMaxX + maxX));
             int maxPixelsX = (int) newMaxX;
-            int minPixelsY = (int) ((winGamePosY - drawOffset) * Scale - (newMaxY - maxY));
+            int minPixelsY = (int) ((winGamePosY - drawOffset) * Scale - (newMaxY + maxY));
             int maxPixlesY = (int) newMaxY;
-            if (_updateDrawPosition || oldDrawOffsetX != winDrawOffsetX || oldDrawOffsetY != winDrawOffsetY) _updateDrawPosition = true;
 
-            return (new Point(realMinRangeX, realMinRangeY), new Point(realMaxRangeX, realMaxRangeY), new Vector2(minPixelsX, minPixelsY), new Vector2(maxPixelsX, maxPixlesY), new Point(winDrawOffsetX, winDrawOffsetY), new Point(winGameCenterX, winGameCenterY), new Point(realMinRangeX + width - 1, realMinRangeY - 1), Math.Max(width, height));
+            if (UpdateDrawPosition || oldDrawOffsetX != winDrawOffsetX || oldDrawOffsetY != winDrawOffsetY) UpdateDrawPosition = true;
+
+            _minTile.X = realMinRangeX;
+            _minTile.Y = realMinRangeY;
+            _maxTile.X = realMaxRangeX;
+            _maxTile.Y = realMaxRangeY;
+
+            _minPixel.X = minPixelsX;
+            _minPixel.Y = minPixelsY;
+            _maxPixel.X = maxPixelsX;
+            _maxPixel.Y = maxPixlesY;
+
+            _offset.X = winDrawOffsetX;
+            _offset.Y = winDrawOffsetY;
+
+
+            UpdateMaxDrawZ();
         }
-#else
-        private static (Point firstTile, Vector2 renderOffset, Point renderDimensions) GetViewPort(int width, int height, int scale)
-        {
-            int off = Math.Abs(width / 44 - height / 44) % 3;
-
-
-            Point renderDimensions = new Point
-            {
-                X = width / scale / 44 + 3,
-                Y = height / scale / 44 + 6
-            };
-
-            int renderDimensionDiff = Math.Abs(renderDimensions.X - renderDimensions.Y);
-            renderDimensionDiff -= renderDimensionDiff % 2;
-
-            int firstZOffset = World.Player.Position.Z > 0
-                ? (int) Math.Abs((World.Player.Position.Z + World.Player.Offset.Z / 4) / 11)
-                : 0;
-
-            Point firstTile = new Point
-            {
-                X = World.Player.Position.X - firstZOffset,
-                Y = World.Player.Position.Y - renderDimensions.Y - firstZOffset
-            };
-
-            if (renderDimensions.Y > renderDimensions.X)
-            {
-                firstTile.X -= renderDimensionDiff / 2;
-                firstTile.Y -= renderDimensionDiff / 2;
-            }
-            else
-            {
-                firstTile.X += renderDimensionDiff / 2;
-                firstTile.Y -= renderDimensionDiff / 2;
-            }
-
-            //Vector2 renderOffset = new Vector2
-            //{
-            //    X = (_graphics.PreferredBackBufferWidth / scale + renderDimensions.Y * 44) / 2 - 22f - (int)World.Player.Offset.X - (firstTile.X - firstTile.Y) * 22f + renderDimensionDiff * 22f,
-            //    Y = _graphics.PreferredBackBufferHeight / scale / 2 - renderDimensions.Y * 44 / 2 + (World.Player.Position.Z + World.Player.Offset.Z / 4) * 4 - (int)World.Player.Offset.Y - (firstTile.X + firstTile.Y) * 22f - 22f - firstZOffset * 44f };
-
-            Vector2 renderOffset = new Vector2();
-
-            renderOffset.X = (width / scale + renderDimensions.Y * 44) / 2 - 22f;
-            renderOffset.X -= (int) World.Player.Offset.X;
-            renderOffset.X -= (firstTile.X - firstTile.Y) * 22f;
-            renderOffset.X += renderDimensionDiff * 22f;
-
-            renderOffset.Y = height / scale / 2 - renderDimensions.Y * 44 / 2;
-            renderOffset.Y += (World.Player.Position.Z + World.Player.Offset.Z / 4) * 4;
-            renderOffset.Y -= (int) World.Player.Offset.Y;
-            renderOffset.Y -= (firstTile.X + firstTile.Y) * 22f;
-            renderOffset.Y -= 22f;
-            renderOffset.Y -= firstZOffset * 44f;
-
-            return (firstTile, renderOffset, renderDimensions);
-        }
-
-#endif
     }
 }

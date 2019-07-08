@@ -1,6 +1,6 @@
 ﻿#region license
 
-//  Copyright (C) 2018 ClassicUO Development Community on Github
+//  Copyright (C) 2019 ClassicUO Development Community on Github
 //
 //	This project is an alternative client for the game Ultima Online.
 //	The goal of this is to develop a lightweight client considering 
@@ -25,12 +25,11 @@ using Microsoft.Xna.Framework;
 
 namespace ClassicUO.Game.GameObjects
 {
-    public sealed class IsometricLight
+    internal sealed class IsometricLight
     {
-        private float _direction = 4.12f;
         private float _height = -0.75f;
-        private int _overall = 9;
-        private int _personal = 9;
+        private int _overall = 9, _realOveall = 9;
+        private int _personal = 9, _realPersonal = 9;
 
         public int Personal
         {
@@ -52,16 +51,6 @@ namespace ClassicUO.Game.GameObjects
             }
         }
 
-        public float Direction
-        {
-            get => _direction;
-            set
-            {
-                _direction = value;
-                Recalculate();
-            }
-        }
-
         public float Height
         {
             get => _height;
@@ -72,22 +61,35 @@ namespace ClassicUO.Game.GameObjects
             }
         }
 
+        public int RealPersonal
+        {
+            get => _realPersonal;
+            set
+            {
+                _realPersonal = value;
+                Recalculate();
+            }
+        }
+
+        public int RealOverall
+        {
+            get => _realOveall;
+            set
+            {
+                _realOveall = value;
+                Recalculate();
+            }
+        }
+
         public float IsometricLevel { get; private set; }
 
         public Vector3 IsometricDirection { get; } = new Vector3(-1.0f, -1.0f, .5f);
 
         private void Recalculate()
         {
-            if (Personal > Overall)
-            {
-                IsometricLevel = 0;
-
-                return;
-            }
-
-            IsometricLevel = (32 - Overall + Personal) / 32.0f;
-            //_direction = 1.2f;
-            //IsometricDirection = Vector3.Normalize(new Vector3((float)Math.Cos(_direction), (float)Math.Sin(_direction), 1f));
+            int reverted = 32 - Overall; //if overall is 0, we have MAXIMUM light, if 30, we have the MINIMUM light, so 30 is the max, but we must have some remainder for visibility
+            float current = Personal > reverted ? Personal : reverted;
+            IsometricLevel = current * 0.03125f;
         }
     }
 }
