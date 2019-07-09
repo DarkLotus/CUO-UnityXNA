@@ -41,7 +41,7 @@ namespace ClassicUO.IO.Resources
 
         public static void Load()
         {
-            _file = new UOFileMul( "Gumpart.mul", "Gumpidx.mul", GUMP_COUNT, 12 );
+            //_file = new UOFileMul( "Gumpart.mul", "Gumpidx.mul", GUMP_COUNT, 12 );
             FileManager.UseUOPGumps = false;
 
             string path = Path.Combine(FileManager.UoFolderPath, "gumpartLegacyMUL.uop");

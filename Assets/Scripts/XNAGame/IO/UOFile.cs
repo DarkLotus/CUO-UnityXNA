@@ -51,12 +51,16 @@ namespace ClassicUO.IO
             {
                // string fileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension( Path );
                 TextAsset textAsset = UnityEngine.Resources.Load( Path ) as TextAsset;
-                Stream stream = new MemoryStream( textAsset.bytes );
-                fixed (byte* ptr = textAsset.bytes)
+                if (textAsset != null)
                 {
-                    SetData( ptr, (long)textAsset.bytes.LongLength );
+                    Stream stream = new MemoryStream( textAsset.bytes );
+                    fixed (byte* ptr = textAsset.bytes)
+                    {
+                        SetData( ptr, (long)textAsset.bytes.LongLength );
+                    }
+                    return;
                 }
-                return;
+
             }
             Log.Message(LogTypes.Trace, $"Loading file:\t\t{Path}");
             FileInfo fileInfo = new FileInfo(Path);
