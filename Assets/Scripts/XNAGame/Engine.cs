@@ -656,6 +656,7 @@ namespace ClassicUO
             // This should be the right order
             OnNetworkUpdate(current, elapsed);
             Mouse.Update();
+            Input.Update();
             _uiManager.Update(current, elapsed);
             Plugin.Tick();
             // ###############################
