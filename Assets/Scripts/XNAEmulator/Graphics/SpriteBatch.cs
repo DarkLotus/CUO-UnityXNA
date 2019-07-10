@@ -71,19 +71,19 @@ namespace Microsoft.Xna.Framework.Graphics
 
         internal void Draw(Texture2D texture2D, Vector2 position, Nullable<Rectangle> source, Color color, float p, Vector2 Origin, float p_2, SpriteEffects spriteEffects, float p_3)
         {
-			graphicsDevice.DrawQueue.EnqueueSprite(new DrawSpriteCall(texture2D, position, source, color.ToVector4(), Origin, spriteEffects));
+		//	graphicsDevice.DrawQueue.EnqueueSprite(new DrawSpriteCall(texture2D, position, source, color.ToVector4(), Origin, spriteEffects));
         }
 		
 		//TODO: Draw stretching
 		internal void Draw(Texture2D texture2D, Nullable<Rectangle> source, Color color)
         {
-			graphicsDevice.DrawQueue.EnqueueSprite(new DrawSpriteCall(texture2D, Vector2.Zero, source, color.ToVector4(), Vector2.Zero, SpriteEffects.None));
+		//	graphicsDevice.DrawQueue.EnqueueSprite(new DrawSpriteCall(texture2D, Vector2.Zero, source, color.ToVector4(), Vector2.Zero, SpriteEffects.None));
         }
 		
 		//Draw texture section
 		internal void Draw(Texture2D texture2D, Vector2 position, Nullable<Rectangle> source, Color color)
         {
-			graphicsDevice.DrawQueue.EnqueueSprite(new DrawSpriteCall(texture2D, position, source, color.ToVector4(), Vector2.Zero, SpriteEffects.None));
+			//graphicsDevice.DrawQueue.EnqueueSprite(new DrawSpriteCall(texture2D, position, source, color.ToVector4(), Vector2.Zero, SpriteEffects.None));
         }
 		
 		//TODO:
@@ -115,23 +115,23 @@ namespace Microsoft.Xna.Framework.Graphics
 				texCoordTL.X = temp;
 			}
 
-			graphicsDevice.DrawQueue.EnqueueSprite(new DrawSpriteCall(texture, Vector2.Zero, source, color.ToVector4(), Vector2.Zero, SpriteEffects.None));
+			//graphicsDevice.DrawQueue.EnqueueSprite(new DrawSpriteCall(texture, Vector2.Zero, source, color.ToVector4(), Vector2.Zero, SpriteEffects.None));
 		}
 
 		//TODO:
 		internal void Draw (Texture2D texture, Nullable<Rectangle> source, Rectangle? sourceRectangle, Color color)
 		{
-			graphicsDevice.DrawQueue.EnqueueSprite(new DrawSpriteCall(texture, Vector2.Zero, source, color.ToVector4(), Vector2.Zero, SpriteEffects.None));
+			//graphicsDevice.DrawQueue.EnqueueSprite(new DrawSpriteCall(texture, Vector2.Zero, source, color.ToVector4(), Vector2.Zero, SpriteEffects.None));
 		}
 
         internal void Draw(Texture2D texture2D, Vector2 position, Color color)
         {
-            graphicsDevice.DrawQueue.EnqueueSprite(new DrawSpriteCall(texture2D, position, null, color.ToVector4(), Vector2.Zero, SpriteEffects.None));
+          //  graphicsDevice.DrawQueue.EnqueueSprite(new DrawSpriteCall(texture2D, position, null, color.ToVector4(), Vector2.Zero, SpriteEffects.None));
         }
 
         internal void DrawString(SpriteFont font, string value, Vector2 position, Color color)
         {
-            graphicsDevice.DrawQueue.EnqueueString(new DrawStringCall(font, value, position, color.ToVector4()));
+           // graphicsDevice.DrawQueue.EnqueueString(new DrawStringCall(font, value, position, color.ToVector4()));
         }
     }
 }

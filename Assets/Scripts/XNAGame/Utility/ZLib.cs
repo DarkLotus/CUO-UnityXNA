@@ -22,6 +22,8 @@
 #endregion
 
 using System;
+using System.IO;
+using System.IO.Compression;
 using System.Runtime.InteropServices;
 
 namespace ClassicUO.Utility
@@ -45,7 +47,21 @@ namespace ClassicUO.Utility
 
         public static void Decompress(byte[] source, int offset, byte[] dest, int length)
         {
-            _compressor.Decompress(dest, ref length, source, source.Length - offset);
+            var ms = new MemoryStream(source);
+            ms.Seek(2, SeekOrigin.Begin);
+          using (Stream input = new DeflateStream(ms,
+                                                      CompressionMode.Decompress))
+              {
+                  using (MemoryStream output = new MemoryStream())
+                  {
+                      input.CopyTo(output);
+                      var ou = output.ToArray();
+                      Buffer.BlockCopy(ou,0,dest,0,ou.Length);
+                      return ;
+                  }
+              }
+          
+            //_compressor.Decompress(dest, ref length, source, source.Length - offset);
         }
 
         private enum ZLibQuality

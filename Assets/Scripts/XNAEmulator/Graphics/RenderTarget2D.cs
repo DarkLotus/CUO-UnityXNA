@@ -11,7 +11,7 @@ namespace Microsoft.Xna.Framework.Graphics
     {
         public RenderTarget2D( GraphicsDevice graphicsDevice, int width, int height, bool v, SurfaceFormat surfaceFormat, DepthFormat depth24Stencil8, int v1, RenderTargetUsage discardContents ) : base (graphicsDevice,width,height,v,surfaceFormat)
         {
-
+            UnityTexture = new UnityEngine.RenderTexture( width, height,24);
         }
     }
     /*public class RenderTarget2D : UnityEngine.RenderTexture

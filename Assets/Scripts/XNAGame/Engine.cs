@@ -283,7 +283,7 @@ namespace ClassicUO
 
         public static AuraManager AuraManager => _engine._auraManager;
 
-        public static string ExePath { get; private set; }
+        public static string ExePath { get; private set; } = "/media/james/480gb/ClassicUO/bin/Debug";
 
         public static DebugInfo DebugInfo => _engine._debugInfo;
 
@@ -475,6 +475,7 @@ namespace ClassicUO
 
             Log.Start(LogTypes.All);
             ExePath = Environment.CurrentDirectory;
+            ExePath = "/media/james/480gb/ClassicUO/bin/Debug";
 
 #if !DEBUG
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
@@ -586,9 +587,9 @@ namespace ClassicUO
             texture0.SetData(hues, 0, size * 2);
             Texture2D texture1 = new Texture2D(GraphicsDevice, 32, size);
             texture1.SetData(hues, size, size);
-            XNATest.HueTexture = texture0;
-            //GraphicsDevice.Textures[1] = texture0;
-            //GraphicsDevice.Textures[2] = texture1;
+            //XNATest.HueTexture = texture0;
+            GraphicsDevice.Textures[1] = texture0;
+            GraphicsDevice.Textures[2] = texture1;
 
             _auraManager = new AuraManager();
             _auraManager.CreateAuraTexture();

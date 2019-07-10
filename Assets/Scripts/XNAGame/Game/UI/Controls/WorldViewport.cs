@@ -59,7 +59,7 @@ namespace ClassicUO.Game.UI.Controls
         {
             ResetHueVector();
 
-            if (Engine.Profile.Current != null && Engine.Profile.Current.UseXBR)
+            /*if (Engine.Profile.Current != null && Engine.Profile.Current.UseXBR)
             {
                 // draw regular world
 
@@ -79,7 +79,7 @@ namespace ClassicUO.Game.UI.Controls
 
                 batcher.Begin();
             }
-            else
+            else*/
                 batcher.Draw2D(_scene.ViewportTexture, x, y, Width, Height, ref _hueVector);
 
 

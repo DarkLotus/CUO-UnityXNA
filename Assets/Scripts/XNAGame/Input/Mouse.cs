@@ -80,7 +80,7 @@ namespace ClassicUO.Input
         public static void Update()
         {
 
- if ( UnityEngine.Input.mousePosition.x < 0 || UnityEngine.Input.mousePosition.y < 0 || UnityEngine.Input.mousePosition.x > UnityEngine.Screen.width || UnityEngine.Input.mousePosition.y > UnityEngine.Screen.height )
+            if ( UnityEngine.Input.mousePosition.x < 0 || UnityEngine.Input.mousePosition.y < 0 || UnityEngine.Input.mousePosition.x > UnityEngine.Screen.width || UnityEngine.Input.mousePosition.y > UnityEngine.Screen.height )
                 return;
                 _position.X = (int)UnityEngine.Input.mousePosition.x;
             _position.Y = UnityEngine.Screen.height - ( int)UnityEngine.Input.mousePosition.y;

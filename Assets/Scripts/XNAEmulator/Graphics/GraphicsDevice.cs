@@ -11,18 +11,11 @@ namespace Microsoft.Xna.Framework.Graphics
     public class GraphicsDevice
     {
         Viewport viewport = new Viewport();
-        private DrawQueue drawQueue;
 
-        public DrawQueue DrawQueue
-        {
-            get { return drawQueue; }
-            set { drawQueue = value; }
-        }
-
-        public GraphicsDevice( DrawQueue drawQueue )
+        public GraphicsDevice( )
         {
             // TODO: Complete member initialization
-            this.drawQueue = drawQueue;
+            
 
             viewport = new Viewport( 0, 0, UnityEngine.Screen.width, UnityEngine.Screen.height );
         }
@@ -39,7 +32,7 @@ namespace Microsoft.Xna.Framework.Graphics
         public RasterizerState RasterizerState { get; set; }
         public IndexBuffer Indices { get; set; }
 
-        public Texture2D[] Textures = new Texture2D[2];
+        public Texture2D[] Textures = new Texture2D[3];
         private VertexBuffer m_VertexBuffer;
 
 
@@ -221,7 +214,7 @@ namespace Microsoft.Xna.Framework.Graphics
             {
                 var mat = new Material( _shader );
                 mat.mainTexture = texture.UnityTexture;
-                mat.SetTexture( "_HueTex", XNATest.HueTexture.UnityTexture );
+                mat.SetTexture( "_HueTex", texture.GraphicDevice.Textures[1].UnityTexture );
                 mat.renderQueue += _materials.Count;
                 return new MaterialHolder( mat, texture );
             }

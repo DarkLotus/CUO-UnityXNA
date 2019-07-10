@@ -111,7 +111,7 @@ namespace ClassicUO.Configuration
 
             // NOTE: We can do any other settings clean-ups here before we save them
 
-            ConfigurationResolver.Save(settingsToSave, Path.Combine(Engine.ExePath, Engine.SettingsFile));
+           // ConfigurationResolver.Save(settingsToSave, Path.Combine(Engine.ExePath, Engine.SettingsFile));
         }
 
         public bool IsValid()

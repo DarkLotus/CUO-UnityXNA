@@ -35,19 +35,8 @@ namespace ClassicUO.Configuration
 
         public void Load(string servername, string username, string charactername)
         {
-            string path = FileSystemHelper.CreateFolderIfNotExists(Engine.ExePath, "Data", "Profiles", username, servername, charactername);
+                           Current = new Profile(username, servername, charactername);
 
-            if (!File.Exists(Path.Combine(path, Engine.SettingsFile)))
-                Current = new Profile(username, servername, charactername);
-            else
-            {
-                Current = ConfigurationResolver.Load<Profile>(Path.Combine(path, Engine.SettingsFile),
-                                                              new JsonSerializerSettings
-                                                              {
-                                                                  TypeNameHandling = TypeNameHandling.All,
-                                                                  MetadataPropertyHandling = MetadataPropertyHandling.ReadAhead
-                                                              }) ?? new Profile(username, servername, charactername);
-            }
         }
 
         public void UnLoadProfile()

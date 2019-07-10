@@ -182,7 +182,6 @@ namespace ClassicUO.IO.Resources
 
         public override void Load()
         {
-            return;
             Dictionary<ulong, UopFileData> hashes = new Dictionary<ulong, UopFileData>();
             int[] un = {0x40000, 0x10000, 0x20000, 0x20000, 0x20000};
 

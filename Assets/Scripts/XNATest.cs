@@ -10,7 +10,6 @@ using System.Linq;
 
 public class XNATest : MonoBehaviour {
     Engine game;
-	DrawQueue drawQueue;
 	
 	public  float updateInterval = 0.5F;
  
@@ -27,11 +26,9 @@ public class XNATest : MonoBehaviour {
         // Add an audio source and tell the media player to use it for playing sounds
         Microsoft.Xna.Framework.Media.MediaPlayer.AudioSource = gameObject.AddComponent<AudioSource>();
         dev = new GraphicsDevice22();
-        drawQueue = new DrawQueue();
         Log.Start( LogTypes.All );
         Engine.Run(new string[]{});
         game = Engine.Instance;
-        game.DrawQueue = drawQueue;
         //game.Initialize();
 
         //game.Run();
@@ -61,7 +58,6 @@ public class XNATest : MonoBehaviour {
         long microseconds = (int)(deltaTime * 1000000);
         long ticks = microseconds * 10;
         game.Tick((uint)ticks );
-        drawQueue.Clear();
 
         timeleft -= Time.deltaTime;
 	    accum += Time.timeScale/Time.deltaTime;
@@ -201,13 +197,11 @@ public class XNATest : MonoBehaviour {
         
         public SetRenderTextureDrawCall(RenderTarget2D text)
         {
-            Texture = text.UnityTexture;
+            Texture = text?.UnityTexture;
         }
     }
 
     public static Queue<DrawCall> Draw = new Queue<DrawCall>();
-
-    public static Microsoft.Xna.Framework.Graphics.Texture2D HueTexture { get; internal set; }
 
 
     public static Material MainTexure;
@@ -255,7 +249,7 @@ public class XNATest : MonoBehaviour {
                     GL.LoadPixelMatrix( 0, Screen.width, Screen.height, 0 );
                 }
               //  GL.Begin( GL.TRIANGLE_STRIP );
-                MainTexure.SetPass( 0 );
+                //MainTexure.SetPass( 0 );
                 cnt = 0;
             }
             else if(call is StandardDrawCall sdcall)
@@ -362,67 +356,7 @@ public class XNATest : MonoBehaviour {
        // if(TextureIndex.Count > 20)
        // System.IO.File.WriteAllBytes( "woo.png", ( MainTexure.mainTexture as UnityEngine.Texture2D ).EncodeToPNG() );
     }
-    void OnGUIII()
-    {
-        // Draw sprites from SpriteBatch.Draw()
-		for (int i = 0; i < drawQueue.LastSpriteQueue.Length; i++) 
-		{
-			DrawSpriteCall call = drawQueue.LastSpriteQueue[i];
-
-			float x = call.Position.X;
-			float y = call.Position.Y;
-			x -= call.Origin.X;
-			y -= call.Origin.Y;
-			float width = call.Texture2D.UnityTexture.width;
-			float height = call.Texture2D.UnityTexture.height;
-			//GUI.color = new Color(call.Color.X,	call.Color.Y, call.Color.Z, call.Color.W);
-			
-			Rect sourceRect = new Rect(0,0, 1,1);
-			
-			if(call.Source != null)
-			{
-				sourceRect.x = call.Source.Value.X / width;
-				sourceRect.y = call.Source.Value.Y / height;
-				sourceRect.width = call.Source.Value.Width / width;
-				sourceRect.height = call.Source.Value.Height / height;
-			}
-			
-			if(call.SpriteEffects == Microsoft.Xna.Framework.Graphics.SpriteEffects.FlipHorizontally)
-			{
-				sourceRect.x = 1-sourceRect.x;
-				sourceRect.width *= -1;
-			}
-			else if(call.SpriteEffects == Microsoft.Xna.Framework.Graphics.SpriteEffects.FlipVertically)
-			{
-				sourceRect.y = 1-sourceRect.y;
-				sourceRect.height *= -1;
-			}
-            //if ( call.Texture2D.RenderTexture != null )
-            //{
-           //     GUI.DrawTextureWithTexCoords( new Rect( x, y, width * Mathf.Abs( sourceRect.width ), height * Mathf.Abs( sourceRect.height ) ), call.Texture2D.RenderTexture, sourceRect );
-           // }
-            else
-            GUI.DrawTextureWithTexCoords(new Rect(x,y,width * Mathf.Abs(sourceRect.width),height * Mathf.Abs(sourceRect.height)), call.Texture2D.UnityTexture, sourceRect);
-		}
-		
-        // Draw strings from SpriteBatch.DrawString()
-        for (int i = 0; i < drawQueue.LastStringQueue.Length; i++)
-        {
-            DrawStringCall call = drawQueue.LastStringQueue[i];
-     
-			//GUI.color = new Color(call.Color.X,	call.Color.Y, call.Color.Z, call.Color.W);
-			
-            Vector2 size = GUI.skin.label.CalcSize(new GUIContent(call.Value));
-            GUI.Label(new Rect(call.Position.X, call.Position.Y, size.x, size.y), call.Value);
-        }
-
-        //GUIStyle style = new GUIStyle();
-        //style.font = Font.
-
-        //GUILayout.Label()
-		//GUI.color = Color.black;
-        //GUILayout.Label(string.Format("{0} fps, {1} sprite draw calls", fps, drawQueue.LastSpriteQueue.Length));
-    }
+   
 		
 
 }

@@ -12,17 +12,9 @@ namespace Microsoft.Xna.Framework
 		private GameComponentCollection _components;
         Content.ContentManager content;
 		GraphicsDevice graphicsDevice;
-		DrawQueue drawQueue;
         long totalTicks = 0;
 
-		public DrawQueue DrawQueue {
-			get {
-				return this.drawQueue;
-			}
-			set {
-				drawQueue = value;
-			}
-		}
+		
         public ContentManager Content
         {
             get { return this.content; }
@@ -34,7 +26,7 @@ namespace Microsoft.Xna.Framework
             get
             {
 				if(graphicsDevice == null)
-					graphicsDevice = new GraphicsDevice(DrawQueue);
+					graphicsDevice = new GraphicsDevice();
 				
 				return graphicsDevice;
             }

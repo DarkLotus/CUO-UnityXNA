@@ -39,7 +39,10 @@ namespace Microsoft.Xna.Framework.Graphics
         public Texture2D( GraphicsDevice graphicsDevice, int width, int height )
         {
             UnityTexture = new UnityEngine.Texture2D( width, height);
+            GraphicDevice = graphicsDevice;
         }
+
+        public GraphicsDevice GraphicDevice { get; set; }
 
         public Texture2D( GraphicsDevice graphicsDevice, int width, int height, bool v, SurfaceFormat surfaceFormat ) : this( graphicsDevice, width, height )
         {
@@ -119,9 +122,9 @@ namespace Microsoft.Xna.Framework.Graphics
                     temp[i] = (uint)u16Tou32(Convert.ToUInt16(data[i]));
                 }
                 
-                byte[] buf = new byte[elementCount * sizeMulti];
+                //byte[] buf = new byte[elementCount * sizeMulti];
                
-                Buffer.BlockCopy( temp, 0, buf, 0, buf.Length );
+               // Buffer.BlockCopy( temp, 0, buf, 0, buf.Length );
                 
                 var destText = UnityTexture as UnityEngine.Texture2D;
                 var dst = destText.GetRawTextureData<uint>();
@@ -171,13 +174,13 @@ namespace Microsoft.Xna.Framework.Graphics
                 
               
             }
-            else if ( typeof( T ) == typeof( uint ) )
+            else if ( typeof( T ) == typeof( uint ) ||  typeof( T ) == typeof( Color )  )
             {
                 sizeMulti = 4;
                 UnityTexture = new UnityEngine.Texture2D( UnityTexture.width, UnityTexture.height,TextureFormat.ARGB32,false);
 
-                byte[] buf = new byte[elementCount * sizeMulti];
-                Buffer.BlockCopy( data, 0, buf, 0, buf.Length );
+                //byte[] buf = new byte[elementCount * sizeMulti];
+                //Buffer.BlockCopy( data, 0, buf, 0, buf.Length );
                 var destText = UnityTexture as UnityEngine.Texture2D;
                 
                 
@@ -212,6 +215,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
                 destText.Apply();
             }
+            
             else
             {
                 throw new Exception( "Not supported " + data.GetType() );
