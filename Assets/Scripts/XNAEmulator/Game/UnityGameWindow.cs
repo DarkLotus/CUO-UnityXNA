@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace Microsoft.Xna.Framework
 {
@@ -21,9 +22,10 @@ namespace Microsoft.Xna.Framework
         public override void BeginScreenDeviceChange(bool willBeFullScreen)
         {
         }
-        public override Rectangle ClientBounds => new Rectangle( 0, 0, 640, 480 );
+        public override Rectangle ClientBounds => new Rectangle( 0, 0, Screen.width, Screen.height );
         public override void EndScreenDeviceChange(string screenDeviceName, int clientWidth, int clientHeight)
         {
+            
         }
         public override IntPtr Handle
         {

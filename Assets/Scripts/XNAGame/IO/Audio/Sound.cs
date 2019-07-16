@@ -27,7 +27,7 @@ using System.Collections.Generic;
 using ClassicUO.Utility;
 
 using Microsoft.Xna.Framework.Audio;
-
+using UnityEngine;
 using static System.String;
 
 namespace ClassicUO.IO.Audio
@@ -156,7 +156,7 @@ namespace ClassicUO.IO.Audio
                // m_ThisInstance.BufferNeeded += OnBufferNeeded;
                // m_ThisInstance.SubmitBuffer(buffer);
                 m_ThisInstance.Volume = volume;
-                m_ThisInstance.Play();
+               // m_ThisInstance.Play();
                // List<Tuple<DynamicSoundEffectInstance, double>> list = asEffect ? m_EffectInstances : m_MusicInstances;
                // double ms = m_ThisInstance.GetSampleDuration(buffer.Length).TotalMilliseconds;
                 //list.Add(new Tuple<DynamicSoundEffectInstance, double>(m_ThisInstance, now + ms));

@@ -7,6 +7,10 @@ using System.Collections.Generic;
 using ClassicUO.Renderer;
 using Microsoft.Xna.Framework.Graphics;
 using System.Linq;
+using Microsoft.Xna.Framework;
+using Quaternion = UnityEngine.Quaternion;
+using Vector3 = UnityEngine.Vector3;
+using Vector4 = UnityEngine.Vector4;
 
 public class XNATest : MonoBehaviour {
     Engine game;
@@ -49,33 +53,23 @@ public class XNATest : MonoBehaviour {
 
 		if (game == null)
 			return;
-		float deltaTime = Time.deltaTime;
-		if(deltaTime > 0.050f)
-		{
-			deltaTime = 0.050f;
-		}
+
+        if (Screen.width != Engine.WindowWidth)
+            Engine.WindowWidth = Screen.width;
+        if (Screen.height != Engine.WindowHeight)
+            Engine.WindowHeight = Screen.height;
+        
+        float deltaTime = Time.deltaTime;
+        if(deltaTime > 0.050f)
+        {
+            deltaTime = 0.050f;
+        }
         //Debug.Log(deltaTime);
         long microseconds = (int)(deltaTime * 1000000);
         long ticks = microseconds * 10;
         game.Tick((uint)ticks );
 
-        timeleft -= Time.deltaTime;
-	    accum += Time.timeScale/Time.deltaTime;
-	    ++frames;
-	    
-	    // Interval ended - update GUI text and start new interval
-	    if( timeleft <= 0.0 )
-	    {
-	        // display two fractional digits (f2 format)
-	  	  fps = accum/frames;
-		
-	 	   //  DebugConsole.Log(format,level);
-	        timeleft = updateInterval;
-	        accum = 0.0F;
-	        frames = 0;
-	    }
-			
-	}
+    }
 
     public abstract class DrawCall
     {
@@ -211,12 +205,17 @@ public class XNATest : MonoBehaviour {
 	    
 	    if (game == null)
 		    return;
-        dev.ResetPools();
-        game.DrawUnity( Time.deltaTime );
+        //dev.ResetPools();
+        //game.DrawUnity( Time.deltaTime );
         
 
         GL.PushMatrix();
         GL.LoadPixelMatrix( 0, Screen.width, Screen.height, 0 );
+
+        game.Render();
+        GL.PopMatrix();
+        return;
+        
         var cam = GameObject.FindWithTag( "MainCamera" ).GetComponent<Camera>();
         var curRT = cam.activeTexture;
         GL.Color( new UnityEngine.Color( 0, 0, 0, 1 ) );

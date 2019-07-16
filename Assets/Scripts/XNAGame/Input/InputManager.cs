@@ -63,57 +63,125 @@ namespace ClassicUO.Input
 
         public event EventHandler<string> TextInput;
         public void Update()
-        {
-            if ( UnityEngine.Input.GetMouseButtonDown( 0 ) )
+        { 
+            if (UnityEngine.Input.GetMouseButtonDown( 0 ))
             {
-                LeftMouseButtonDown.Raise();
-
                 Mouse.Begin();
+                Mouse.LButtonPressed = true;
                 Mouse.LDropPosition = Mouse.Position;
                 Mouse.CancelDoubleClick = false;
                 uint ticks = (uint)DateTime.Now.Millisecond;
 
-                if ( Mouse.LastLeftButtonClickTime + Mouse.MOUSE_DELAY_DOUBLE_CLICK >= ticks )
+                if (Mouse.LastLeftButtonClickTime + Mouse.MOUSE_DELAY_DOUBLE_CLICK >= ticks)
                 {
                     Mouse.LastLeftButtonClickTime = 0;
+
+                    var res = Engine.SceneManager.CurrentScene.OnLeftMouseDoubleClick();
+
                     MouseDoubleClickEventArgs arg = new MouseDoubleClickEventArgs(Mouse.Position.X, Mouse.Position.Y, MouseButton.Left);
 
-                    if ( LeftMouseDoubleClick != null  )
-                        LeftMouseButtonDown.Raise(arg);
+                    LeftMouseDoubleClick.Raise(arg);
+
+                    if (!arg.Result && !res)
+                    {
+                        Engine.SceneManager.CurrentScene.OnLeftMouseDown();
+                        LeftMouseButtonDown.Raise();
+                    }
                     else
                         Mouse.LastLeftButtonClickTime = 0xFFFF_FFFF;
 
                 }
-                else
+
+                Engine.SceneManager.CurrentScene.OnLeftMouseDown();
+                LeftMouseButtonDown.Raise();
+                Mouse.LastLeftButtonClickTime = Mouse.CancelDoubleClick ? 0 : ticks;
+            }
+            else if(UnityEngine.Input.GetMouseButtonUp( 0 ))
+            {
+                if (Mouse.LastLeftButtonClickTime != 0xFFFF_FFFF)
                 {
-                    LeftMouseButtonDown.Raise();
-                    Mouse.LastLeftButtonClickTime = Mouse.CancelDoubleClick ? 0 : ticks;
+                    Engine.SceneManager.CurrentScene.OnLeftMouseUp();
+                    LeftMouseButtonUp.Raise();
+                }
+                Mouse.LButtonPressed = false;
+                _dragStarted = false;
+                Mouse.IsDragging = false;
+                Mouse.End();
+            }
+
+             if (UnityEngine.Input.GetMouseButtonDown( 1 ))
+            {
+                Mouse.Begin();
+                Mouse.RButtonPressed = true;
+                Mouse.RDropPosition = Mouse.Position;
+                Mouse.CancelDoubleClick = false;
+                uint ticks = (uint)DateTime.Now.Millisecond;
+
+                if (Mouse.LastRightButtonClickTime + Mouse.MOUSE_DELAY_DOUBLE_CLICK >= ticks)
+                {
+                    Mouse.LastRightButtonClickTime = 0;
+
+                    var res = Engine.SceneManager.CurrentScene.OnRightMouseDoubleClick();
+
+                    MouseDoubleClickEventArgs arg = new MouseDoubleClickEventArgs(Mouse.Position.X, Mouse.Position.Y, MouseButton.Right);
+
+                    RightMouseDoubleClick.Raise(arg);
+
+                    if (!arg.Result && !res)
+                    {
+                        Engine.SceneManager.CurrentScene.OnRightMouseDown();
+                        RightMouseButtonDown.Raise();
+                    }
+                    else
+                        Mouse.LastRightButtonClickTime = 0xFFFF_FFFF;
+
+                    return;
                 }
 
-               
-
-            }
-            if ( UnityEngine.Input.GetMouseButtonUp( 0 ) )
-            {
-                if ( Mouse.LastLeftButtonClickTime != 0xFFFF_FFFF )
-                    LeftMouseButtonUp.Raise();
-            }
-            if ( UnityEngine.Input.GetMouseButtonDown( 1 ) )
-            {
+                Engine.SceneManager.CurrentScene.OnRightMouseDown();
                 RightMouseButtonDown.Raise();
+                Mouse.LastRightButtonClickTime = Mouse.CancelDoubleClick ? 0 : ticks;
             }
-            if ( UnityEngine.Input.GetMouseButtonUp( 1 ) )
+            else if( UnityEngine.Input.GetMouseButtonUp( 1 ) )
             {
-                RightMouseButtonUp.Raise();
+                if (Mouse.LastRightButtonClickTime != 0xFFFF_FFFF)
+                {
+                    Engine.SceneManager.CurrentScene.OnRightMouseUp();
+                    RightMouseButtonUp.Raise();
+                }
+                Mouse.RButtonPressed = false;
+                Mouse.End();
             }
+
 
             foreach ( UnityEngine.KeyCode kcode in Enum.GetValues( typeof( UnityEngine.KeyCode ) ) )
             {
-               // if ( UnityEngine.Input.GetKeyDown( kcode ) )
-                    //KeyDown.Raise(kcode);
+                if (UnityEngine.Input.GetKeyDown(kcode))
+                {
+                    var key = new SDL_KeyboardEvent() {keysym = new SDL_Keysym() {sym = (SDL_Keycode) kcode}};
+                    
+                    Engine.SceneManager.CurrentScene.OnKeyDown(key);
 
+                    KeyDown?.Raise(key);
+                }
+                if (UnityEngine.Input.GetKeyUp(kcode))
+                {
+                    var key = new SDL_KeyboardEvent() {keysym = new SDL_Keysym() {sym = (SDL_Keycode) kcode}};
+                    
+                    Engine.SceneManager.CurrentScene.OnKeyUp(key);
+                    
+                    KeyUp?.Raise(key);
+                  
+                }
+                    //KeyDown.Raise(kcode);
+                   
             }
 
+            if (!_ignoreNextTextInput && UnityEngine.Input.inputString != "")
+            {
+                Engine.SceneManager.CurrentScene.OnTextInput(UnityEngine.Input.inputString);
+                TextInput.Raise(UnityEngine.Input.inputString);
+            }
 
             if ( Mouse.IsDragging ) MouseDragging.Raise();
 

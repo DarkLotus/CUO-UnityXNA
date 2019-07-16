@@ -46,12 +46,24 @@ namespace Microsoft.Xna.Framework.Graphics
         }*/
         internal void SetRenderTarget( RenderTarget2D renderTarget )
         {
-            XNATest.Draw.Enqueue( new XNATest.SetRenderTextureDrawCall( renderTarget ) );
-            /*var cam = GameObject.FindWithTag( "MainCamera" ).GetComponent<Camera>();
-            if(renderTarget == null)
-                cam.Render();
-            cam.targetTexture = renderTarget;
-            */
+           // XNATest.Draw.Enqueue( new XNATest.SetRenderTextureDrawCall( renderTarget ) );
+           if ( renderTarget != null )
+           {
+               // GL.PopMatrix();
+                   
+               UnityEngine.Graphics.SetRenderTarget( renderTarget.UnityTexture as RenderTexture );
+               GL.Clear(true,true, UnityEngine.Color.black );
+               //GL.PushMatrix();
+               GL.LoadPixelMatrix( 0, renderTarget.UnityTexture.width, renderTarget.UnityTexture.height, 0 );
+
+           }
+           else
+           {
+               //GL.PopMatrix();
+               UnityEngine.Graphics.SetRenderTarget( null );
+               //  GL.PushMatrix();
+               GL.LoadPixelMatrix( 0, Screen.width, Screen.height, 0 );
+           }
 
 
         }
@@ -59,14 +71,20 @@ namespace Microsoft.Xna.Framework.Graphics
 
         public void Clear(ClearOptions depthBuffer, Vector4 vectorClear, int i, int i1)
         {
-            
+            GL.Clear(true,true, UnityEngine.Color.black );
+
         }
 
         public void Present()
         {
             //throw new NotImplementedException();
+            ResetPools();
         }
-
+        public void ResetPools()
+        {
+            _materialPool.Reset();
+            _meshPool.Reset();
+        }
         /// <summary>
         /// Draw geometry by indexing into the vertex buffer.
         /// </summary>
@@ -99,13 +117,39 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             var verts = m_VertexBuffer.Data.Skip(baseVertex).Take(numVertices).ToArray();
             //Texture is in Textures[0]
-            XNATest.Draw.Enqueue(new XNATest.IndexedPrimativeDrawCall(Textures[0],verts,primitiveCount));
+            //XNATest.Draw.Enqueue(new XNATest.IndexedPrimativeDrawCall(Textures[0],verts,primitiveCount));
+            
+            for ( int i = 0; i < verts.Length; i++ )
+            {
+                verts[i].TextureCoordinate.Y = 1 - verts[i].TextureCoordinate.Y;
+            }
+            var testmesh = GetMesh(primitiveCount);
+            testmesh.Populate( verts, verts.Length );
+             //if( lastMaterial  != MainTexure )
+            {
+                GetMat(Textures[0]).SetPass(0);
+                // MainTexure.SetPass( 0 );
+                //lastMaterial = MainTexure;
+
+            }
+           UnityEngine.Graphics.DrawMeshNow( testmesh.Mesh, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity );
         }
 
 
         public void SetVertexBuffer(VertexBuffer vertexBuffer)
         {
             m_VertexBuffer = vertexBuffer;
+        }
+        private readonly MeshPool _meshPool = new MeshPool();
+        public Material GetMat(Texture2D text)
+        {
+            return _materialPool.Get( text );
+        }
+
+        private readonly MaterialPool _materialPool = new MaterialPool();
+        public MeshHolder GetMesh(int primCCount)
+        {
+            return _meshPool.Get( primCCount );
         }
     }
     
@@ -192,59 +236,16 @@ namespace Microsoft.Xna.Framework.Graphics
             throw new NotImplementedException();
         }
 
-        private class MaterialPool
+       
+
+       
+
+        internal void SetRenderTarget( RenderTarget2D renderTarget )
         {
-            private class MaterialHolder
-            {
-                public readonly Material Material;
-                public readonly Texture2D Texture2D;
-
-                public MaterialHolder( Material material, Texture2D texture2D )
-                {
-                    Material = material;
-                    Texture2D = texture2D;
-                }
-            }
-
-            private readonly List<MaterialHolder> _materials = new List<MaterialHolder>();
-            private int _index;
-            private readonly Shader _shader = Shader.Find( "Unlit/HueShader" );
-
-            private MaterialHolder Create( Texture2D texture )
-            {
-                var mat = new Material( _shader );
-                mat.mainTexture = texture.UnityTexture;
-                mat.SetTexture( "_HueTex", texture.GraphicDevice.Textures[1].UnityTexture );
-                mat.renderQueue += _materials.Count;
-                return new MaterialHolder( mat, texture );
-            }
-
-            public Material Get( Texture2D texture )
-            {
-                while ( _index < _materials.Count )
-                {
-                    if ( _materials[_index].Texture2D == texture )
-                    {
-                        _index++;
-                        return _materials[_index - 1].Material;
-                    }
-
-                    _index++;
-                }
-
-                var material = Create( texture );
-                _materials.Add( material );
-                _index++;
-                return _materials[_index - 1].Material;
-            }
-
-            public void Reset()
-            {
-                _index = 0;
-            }
+            throw new NotImplementedException();
         }
-
-        public class MeshHolder
+    }
+    public class MeshHolder
         {
             public readonly int SpriteCount;
             public readonly Mesh Mesh;
@@ -377,8 +378,58 @@ namespace Microsoft.Xna.Framework.Graphics
             }
         }
 
+    public class MaterialPool
+    {
+        private class MaterialHolder
+        {
+            public readonly Material Material;
+            public readonly Texture2D Texture2D;
 
-        private class MeshPool
+            public MaterialHolder( Material material, Texture2D texture2D )
+            {
+                Material = material;
+                Texture2D = texture2D;
+            }
+        }
+
+        private readonly List<MaterialHolder> _materials = new List<MaterialHolder>();
+        private int _index;
+        private readonly Shader _shader = Shader.Find( "Unlit/HueShader" );
+
+        private MaterialHolder Create( Texture2D texture )
+        {
+            var mat = new Material( _shader );
+            mat.mainTexture = texture.UnityTexture;
+            mat.SetTexture( "_HueTex", texture.GraphicDevice.Textures[1].UnityTexture );
+            mat.renderQueue += _materials.Count;
+            return new MaterialHolder( mat, texture );
+        }
+
+        public Material Get( Texture2D texture )
+        {
+            while ( _index < _materials.Count )
+            {
+                if ( _materials[_index].Texture2D == texture )
+                {
+                    _index++;
+                    return _materials[_index - 1].Material;
+                }
+
+                _index++;
+            }
+
+            var material = Create( texture );
+            _materials.Add( material );
+            _index++;
+            return _materials[_index - 1].Material;
+        }
+
+        public void Reset()
+        {
+            _index = 0;
+        }
+    }
+    public class MeshPool
         {
             private List<MeshHolder> _unusedMeshes = new List<MeshHolder>();
             private List<MeshHolder> _usedMeshes = new List<MeshHolder>();
@@ -430,11 +481,4 @@ namespace Microsoft.Xna.Framework.Graphics
                 _usedMeshes = temp;
             }
         }
-
-        internal void SetRenderTarget( RenderTarget2D renderTarget )
-        {
-            throw new NotImplementedException();
-        }
-    }
-   
 }

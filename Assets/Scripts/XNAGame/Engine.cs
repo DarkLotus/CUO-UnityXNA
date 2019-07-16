@@ -311,8 +311,7 @@ namespace ClassicUO
 
         internal static void Run(string[] args)
         {
-            _engine = new Engine(args);
-            //using ()
+            using (_engine = new Engine(args))
             {
                 _engine.Initialize();
                 if (!_engine.IsQuitted)
@@ -693,10 +692,10 @@ namespace ClassicUO
 
             double fpsTime = FPSTime;
 
-            //if (_totalElapsed > fpsTime)
+            if (_totalElapsed > fpsTime)
             {
-                Render();
-                GraphicsDevice?.Present();
+               // Render();
+               // GraphicsDevice?.Present();
                 _totalElapsed -= fpsTime;
                 _isRunningSlowly = _totalElapsed > fpsTime;
 
@@ -723,8 +722,9 @@ namespace ClassicUO
         }
 
 
-        private void Render()
+        public void Render()
         {
+            GraphicsDevice?.Present();
             _debugInfo.Reset();
 
             Profiler.EndFrame();
