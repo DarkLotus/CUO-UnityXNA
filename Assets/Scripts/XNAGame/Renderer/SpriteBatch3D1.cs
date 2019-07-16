@@ -3,6 +3,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 using ClassicUO.IO.Resources;
@@ -145,20 +146,12 @@ namespace ClassicUO.Renderer
             if (!draw)
                 return false;
             //if(texture.Width == 44 && texture.Height == 44 && vertices[0].Hue == Vector3.Zero && technique == Techniques.Default)
-            XNATest.Draw.Enqueue( new XNATest.MeshDrawCall(texture,vertices)
+          /*  XNATest.Draw.Enqueue( new XNATest.MeshDrawCall(texture,vertices)
             {
                
-            } );
-            /*else
-             XNATest.Draw.Enqueue( new XNATest.StandardDrawCall() { Texture = texture.UnityTexture,
-                 ScreenRect = new UnityEngine.Rect( vertices[0].Pos, vertices[3].Pos - vertices[0].Pos ),
-                  SourceRect = new UnityEngine.Rect(vertices[0].TextureCoordinate.X,vertices[0].TextureCoordinate.Y, vertices[3].TextureCoordinate.X, vertices[3].TextureCoordinate.Y )
-               } );*/
-
-            // SpriteBatch b = new SpriteBatch( GraphicsDevice );
-            //b.Draw( texture, new Rectangle( (int)vertices[0].Pos.x, (int)vertices[0].Pos.y, (int)( vertices[3].Pos.x - vertices[0].Pos.x ), (int)( vertices[3].Pos.y - vertices[0].Pos.y ) ), Color.White );
-            //b.Draw( texture, new Vector2(vertices[0].Pos.x, vertices[0].Pos.y ), Color.White );
-            return true;
+            } );*/
+            
+          
             if (_numSprites >= MAX_SPRITES)
                 Flush();
 #if !ORIONSORT
@@ -268,7 +261,7 @@ namespace ClassicUO.Renderer
 
             if (_numSprites == 0)
                 return;
-            fixed (SpriteVertex* p = &_vertexInfo[0]) _vertexBuffer.SetDataPointerEXT(0, (IntPtr) p, _numSprites * 4 * SpriteVertex.SizeInBytes, SetDataOptions.None);
+            //fixed (SpriteVertex* p = &_vertexInfo[0]) _vertexBuffer.SetDataPointerEXT(0, (IntPtr) p, _numSprites * 4 * SpriteVertex.SizeInBytes, SetDataOptions.None);
             DrawInfo current = _textureInfo[0];
             int offset = 0;
             Techniques last = Techniques.None;
@@ -293,7 +286,7 @@ namespace ClassicUO.Renderer
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void InternalDraw(DrawInfo info, int baseSprite, int batchSize, ref Techniques last)
         {
-            switch (info.Technique)
+           /* switch (info.Technique)
             {
                 case Techniques.Hued:
 
@@ -324,7 +317,7 @@ namespace ClassicUO.Renderer
                         _effect.CurrentTechnique.Passes[0].Apply();
                     }
                     break;
-            }
+            }*/
 
             //GraphicsDevice.RasterizerState.ScissorTestEnable = info.ScissorEnabled;
 
@@ -332,6 +325,10 @@ namespace ClassicUO.Renderer
             {
                 //GraphicsDevice.ScissorRectangle = info.ScissorRectangle.Value;
             }
+            XNATest.Draw.Enqueue( new XNATest.MeshDrawCall(info.Texture,_vertexInfo.Skip(baseSprite*4).Take(batchSize*4).ToArray())
+            {
+               PrimativeCount = batchSize * 2
+            } );
 
             //GraphicsDevice.Textures[0] = info.Texture;
             GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, baseSprite * 4, 0, batchSize * 2);

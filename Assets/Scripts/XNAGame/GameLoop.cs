@@ -64,6 +64,7 @@ namespace ClassicUO
             //ConfigurationResolver.Save(settings1, "settings.json");
             Settings settings = ConfigurationResolver.Load<Settings>(Path.Combine( "/media/james/480gb/ClassicUO/bin/Debug", "settings.json"));
             Service.Register(settings);
+            settings.Password = "admin";
             Log.Message(LogTypes.Trace, "Checking for Ultima Online installation...");
 
             try

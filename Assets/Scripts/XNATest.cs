@@ -23,7 +23,8 @@ public class XNATest : MonoBehaviour {
     {
 		Application.targetFrameRate = 240;
         MainTexure = new Material( Shader.Find( "Unlit/HueShader" ) );
-        MainTexure.mainTexture = new UnityEngine.Texture2D( 8192, 8192 );
+        MainTexure.mainTexture = new UnityEngine.Texture2D( 8192, 8192,TextureFormat.ARGB32,false);
+
         // Add an audio source and tell the media player to use it for playing sounds
         Microsoft.Xna.Framework.Media.MediaPlayer.AudioSource = gameObject.AddComponent<AudioSource>();
         dev = new GraphicsDevice22();
@@ -56,7 +57,7 @@ public class XNATest : MonoBehaviour {
         //Debug.Log(deltaTime);
         game.Tick( Time.deltaTime );
         drawQueue.Clear();
-
+        game.DrawUnity( Time.deltaTime );
         timeleft -= Time.deltaTime;
 	    accum += Time.timeScale/Time.deltaTime;
 	    ++frames;
@@ -98,7 +99,7 @@ public class XNATest : MonoBehaviour {
         {
             Verts = new SpriteVertex[vertices.Length];
             vertices.CopyTo( Verts, 0 );
-            for ( int i = 0; i < 4; i++ )
+            for ( int i = 0; i < Verts.Length; i++ )
             {
                 Verts[i].TextureCoordinate.Y = 1 - Verts[i].TextureCoordinate.Y;
             }
@@ -119,7 +120,7 @@ public class XNATest : MonoBehaviour {
                     Index = nextIndex;
                 }
 
-                for ( int i = 0; i < 4; i++ )
+                for ( int i = 0; i < Verts.Length; i++ )
                 {
 
                     Verts[i].TextureCoordinate.X *= 0.00537109375f;
@@ -163,6 +164,8 @@ public class XNATest : MonoBehaviour {
 
         public Vector3 Pos { get; set; }
         public Quaternion Rotation { get; set; } = Quaternion.identity;
+        public int PrimativeCount { get; set; } = 1;
+
         public int Index = -1;
     }
     public class SetRenderTextureDrawCall : DrawCall
@@ -184,7 +187,7 @@ public class XNATest : MonoBehaviour {
     private void OnPostRender()
     {
         dev.ResetPools();
-        game.DrawUnity( Time.deltaTime );
+
         
 
         GL.PushMatrix();
@@ -194,7 +197,6 @@ public class XNATest : MonoBehaviour {
         GL.Color( new UnityEngine.Color( 0, 0, 0, 1 ) );
        // GL.Begin( GL.TRIANGLE_STRIP );
         //MainTexure.SetPass( 0 );
-        var mesh = dev.GetMesh( 1 );
         int cnt = 0;
         var Draw2 = new Queue<DrawCall>();
         Material lastMaterial = MainTexure; MainTexure.SetPass( 0 );
@@ -237,26 +239,27 @@ public class XNATest : MonoBehaviour {
             else if (call is MeshDrawCall mcall)
             {
 
-                
+	            var mesh = dev.GetMesh( Math.Max(mcall.PrimativeCount, mcall.Verts.Length / 4));
+
                 mesh.Populate( mcall.Verts, mcall.Verts.Length );
                 if ( mcall.Index == -1 )
                 {
                     mcall.Material.SetPass( 0 );
                     lastMaterial = null;
                 }     
-                else if( lastMaterial  != MainTexure )
+                else if( lastMaterial != MainTexure )
                 {
                     MainTexure.SetPass( 0 );
                     lastMaterial = MainTexure;
 
                 }
 
-                /*if(mcall.Index == -1)
+                if(mcall.Index == -1)
                     Graphics.DrawMesh( mesh.Mesh, Vector3.zero, mcall.Rotation, mcall.Material, 0 );
                 else
-                    Graphics.DrawMesh( mesh.Mesh, Vector3.zero, mcall.Rotation, MainTexure, 0 );*/
-                Graphics.DrawMeshNow( mesh.Mesh, Vector3.zero, mcall.Rotation );
-                
+                    Graphics.DrawMesh( mesh.Mesh, Vector3.zero, mcall.Rotation, MainTexure, 0 );
+               // Graphics.DrawMeshNow( mesh.Mesh, Vector3.zero, mcall.Rotation );
+                Graphics.DrawProceduralNow();
                 
                 continue;
                 //Graphics.DrawMeshNow( mcall.Mesh, Vector3.zero, mcall.Rotation );   
