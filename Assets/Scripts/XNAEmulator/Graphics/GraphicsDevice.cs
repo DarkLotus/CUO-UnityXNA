@@ -16,7 +16,6 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             // TODO: Complete member initialization
             
-
             viewport = new Viewport( 0, 0, UnityEngine.Screen.width, UnityEngine.Screen.height );
         }
 
@@ -115,7 +114,18 @@ namespace Microsoft.Xna.Framework.Graphics
             int primitiveCount
         )
         {
-            var verts = m_VertexBuffer.Data.Skip(baseVertex).Take(numVertices).ToArray();
+            
+            
+            //postrender??
+            //material.SetPass(0);
+            var mat = GetMat(Textures[0]);
+            mat.SetBuffer("_vertices", m_VertexBuffer.Buffer);
+            mat.SetBuffer("_indices", Indices.Buffer);
+
+                mat.SetPass(0);
+            UnityEngine.Graphics.DrawProceduralNow(MeshTopology.Triangles,numVertices);
+            
+           /* var verts = m_VertexBuffer.Data.Skip(baseVertex).Take(numVertices).ToArray();
             //Texture is in Textures[0]
             //XNATest.Draw.Enqueue(new XNATest.IndexedPrimativeDrawCall(Textures[0],verts,primitiveCount));
             
@@ -132,7 +142,7 @@ namespace Microsoft.Xna.Framework.Graphics
                 //lastMaterial = MainTexure;
 
             }
-           UnityEngine.Graphics.DrawMeshNow( testmesh.Mesh, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity );
+           UnityEngine.Graphics.DrawMeshNow( testmesh.Mesh, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity );*/
         }
 
 
@@ -481,4 +491,8 @@ namespace Microsoft.Xna.Framework.Graphics
                 _usedMeshes = temp;
             }
         }
+    
+    
+    
+    
 }

@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Microsoft.Xna.Framework.Graphics
 {
     public class IndexBuffer
@@ -7,7 +9,11 @@ namespace Microsoft.Xna.Framework.Graphics
         }
 
         public void SetData(short[] generateIndexArray)
-        {
+        {            
+            m_Buffer.SetData(generateIndexArray);
+
         }
+        internal ComputeBuffer m_Buffer;
+        public ComputeBuffer Buffer => m_Buffer;
     }
 }

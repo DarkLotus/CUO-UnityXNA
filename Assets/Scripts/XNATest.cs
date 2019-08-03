@@ -29,7 +29,7 @@ public class XNATest : MonoBehaviour {
         MainTexure.mainTexture = new UnityEngine.Texture2D( 8192, 8192 );
         // Add an audio source and tell the media player to use it for playing sounds
         Microsoft.Xna.Framework.Media.MediaPlayer.AudioSource = gameObject.AddComponent<AudioSource>();
-        dev = new GraphicsDevice22();
+        dev = new GraphicsDevice();
         Log.Start( LogTypes.All );
         Engine.Run(new string[]{});
         game = Engine.Instance;
@@ -86,7 +86,7 @@ public class XNATest : MonoBehaviour {
         public Rect ScreenRect { get; set; }
         public Material Material { get; set; }
     }
-    private static GraphicsDevice22 dev;
+    private static GraphicsDevice dev;
     internal class IndexedPrimativeDrawCall : XNATest.DrawCall
     {
 	    public IndexedPrimativeDrawCall(Microsoft.Xna.Framework.Graphics.Texture2D texture2D, PositionNormalTextureColor[] vertices, int primitiveCount)
