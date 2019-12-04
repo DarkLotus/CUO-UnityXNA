@@ -1766,8 +1766,9 @@ namespace ClassicUO.Renderer
         protected bool PushSprite(Texture2D texture)
         {
             EnsureSize();
-            TextureInfo[NumSprites++] = texture;
-
+            
+            TextureInfo[NumSprites++] =  texture;
+            
             return true;
         }
 
@@ -1826,7 +1827,7 @@ namespace ClassicUO.Renderer
 
             for (int i = 1; i < NumSprites; i++)
             {
-                //if (TextureInfo[i] != current)
+                if (TextureInfo[i] != current)
                 {
                     InternalDraw(current, offset, i - offset);
                     current = TextureInfo[i];

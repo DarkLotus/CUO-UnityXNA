@@ -115,26 +115,46 @@ namespace Microsoft.Xna.Framework.Graphics
             int primitiveCount
         )
         {
+            if (atlas == null)
+            {
+                atlas = new DynamicAtlas(4096,"atlas");
+            }
+            if (atlas.Get(Textures[0].UnityTexture.GetHashCode().ToString()) == null)
+            {
+                atlas.Insert(Textures[0].UnityTexture as UnityEngine.Texture2D,Textures[0].UnityTexture.GetHashCode().ToString());
+            }
+            atlas.Apply();
+            DynamicAtlas.Save(atlas, new DynamicAtlas.FileInfo("test"));
+            
             var verts = m_VertexBuffer.Data.Skip(baseVertex).Take(numVertices).ToArray();
             //Texture is in Textures[0]
             //XNATest.Draw.Enqueue(new XNATest.IndexedPrimativeDrawCall(Textures[0],verts,primitiveCount));
-            
+
+            var tI = atlas.Get(Textures[0].UnityTexture.GetHashCode().ToString());
             for ( int i = 0; i < verts.Length; i++ )
             {
                 verts[i].TextureCoordinate.Y = 1 - verts[i].TextureCoordinate.Y;
+                
+                verts[i].TextureCoordinate.X *= 0.01137109375f;
+                verts[i].TextureCoordinate.Y *= 0.01137109375f;
+                verts[i].TextureCoordinate.X += ( tI.Rect.xMin / 4096 );
+                verts[i].TextureCoordinate.Y += ( tI.Rect.yMin / 4096 );
+                
             }
             var testmesh = GetMesh(primitiveCount);
             testmesh.Populate( verts, verts.Length );
-             //if( lastMaterial  != MainTexure )
+             if( lastMaterial  == null)
             {
-                GetMat(Textures[0]).SetPass(0);
+                GetMat(new Texture2D(atlas.Texture)).SetPass(0);
                 // MainTexure.SetPass( 0 );
-                //lastMaterial = MainTexure;
+                lastMaterial = GetMat(new Texture2D(atlas.Texture));
 
             }
            UnityEngine.Graphics.DrawMeshNow( testmesh.Mesh, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity );
         }
 
+        private Material lastMaterial;
+        private DynamicAtlas atlas;
 
         public void SetVertexBuffer(VertexBuffer vertexBuffer)
         {
@@ -400,7 +420,7 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             var mat = new Material( _shader );
             mat.mainTexture = texture.UnityTexture;
-            mat.SetTexture( "_HueTex", texture.GraphicDevice.Textures[1].UnityTexture );
+            //mat.SetTexture( "_HueTex", texture.GraphicDevice.Textures[1].UnityTexture );
             mat.renderQueue += _materials.Count;
             return new MaterialHolder( mat, texture );
         }
