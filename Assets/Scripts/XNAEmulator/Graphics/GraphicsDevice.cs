@@ -82,7 +82,7 @@ namespace Microsoft.Xna.Framework.Graphics
         }
         public void ResetPools()
         {
-            _materialPool.Reset();
+            //_materialPool.Reset();
             _meshPool.Reset();
         }
         /// <summary>
@@ -119,18 +119,30 @@ namespace Microsoft.Xna.Framework.Graphics
             {
                 atlas = new DynamicAtlas(4096,"atlas");
             }
-            if (atlas.Get(Textures[0].UnityTexture.GetHashCode().ToString()) == null)
+
+            if (Textures == null || Textures[0] == null || Textures[0].Hash == -1)
             {
-                atlas.Insert(Textures[0].UnityTexture as UnityEngine.Texture2D,Textures[0].UnityTexture.GetHashCode().ToString());
+                Console.WriteLine("NullTexture");
+                return;
             }
-            atlas.Apply();
-            DynamicAtlas.Save(atlas, new DynamicAtlas.FileInfo("test"));
+            if (atlas.Get(Textures[0].Hash.ToString()) == null)
+            {
+                if (Textures[0].IsDisposed)
+                {
+                    return;
+                }
+                Console.WriteLine($"Storing Texture: {Textures[0].Hash.ToString()} Storing: {atlas.Lenght}");
+                atlas.Insert(Textures[0].UnityTexture as UnityEngine.Texture2D,Textures[0].Hash.ToString());
+                atlas.Apply();
+            }
+
+            //DynamicAtlas.Save(atlas, new DynamicAtlas.FileInfo("test"));
             
             var verts = m_VertexBuffer.Data.Skip(baseVertex).Take(numVertices).ToArray();
             //Texture is in Textures[0]
             //XNATest.Draw.Enqueue(new XNATest.IndexedPrimativeDrawCall(Textures[0],verts,primitiveCount));
 
-            var tI = atlas.Get(Textures[0].UnityTexture.GetHashCode().ToString());
+            var tI = atlas.Get(Textures[0].Hash.ToString());
             for ( int i = 0; i < verts.Length; i++ )
             {
                 verts[i].TextureCoordinate.Y = 1 - verts[i].TextureCoordinate.Y;
@@ -145,12 +157,19 @@ namespace Microsoft.Xna.Framework.Graphics
             testmesh.Populate( verts, verts.Length );
              if( lastMaterial  == null)
             {
-                GetMat(new Texture2D(atlas.Texture)).SetPass(0);
+                var mat = GetMat(new Texture2D(atlas.Texture));
+                mat.SetPass(0);
                 // MainTexure.SetPass( 0 );
-                lastMaterial = GetMat(new Texture2D(atlas.Texture));
+                lastMaterial = mat;
 
             }
+             else
+             {
+                 lastMaterial.SetPass(0);
+             }
            UnityEngine.Graphics.DrawMeshNow( testmesh.Mesh, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity );
+           
+           
         }
 
         private Material lastMaterial;

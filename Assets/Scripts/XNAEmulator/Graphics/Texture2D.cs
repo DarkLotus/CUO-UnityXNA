@@ -10,7 +10,9 @@ using UnityEngine;
 namespace Microsoft.Xna.Framework.Graphics
 {
 	public class Texture2D : IDisposable
-	{
+    {
+
+        public int Hash = -1;
         private UnityEngine.Texture unityTexture;
 
         public UnityEngine.Texture UnityTexture
@@ -220,8 +222,8 @@ namespace Microsoft.Xna.Framework.Graphics
             {
                 throw new Exception( "Not supported " + data.GetType() );
             }
-            
 
+            Hash = UnityTexture.GetHashCode();
             return;
 
             /*UnityEngine.Color[] cols = new UnityEngine.Color[elementCount];

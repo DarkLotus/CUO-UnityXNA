@@ -209,11 +209,11 @@ public class XNATest : MonoBehaviour {
         //game.DrawUnity( Time.deltaTime );
         
 
-        GL.PushMatrix();
+        //GL.PushMatrix();
         GL.LoadPixelMatrix( 0, Screen.width, Screen.height, 0 );
 
         game.Render();
-        GL.PopMatrix();
+        //GL.PopMatrix();
         return;
         
         var cam = GameObject.FindWithTag( "MainCamera" ).GetComponent<Camera>();

@@ -38,7 +38,7 @@ namespace ClassicUO.Renderer
 
         public SpriteTexture(int width, int height, bool is32bit = true) : base(Engine.Batcher.GraphicsDevice, width, height, false, is32bit ? SurfaceFormat.Color : SurfaceFormat.Bgra5551)
         {
-            Ticks = Engine.Ticks + 3000;
+            Ticks = Engine.Ticks + 30000;
             _is32Bit = is32bit;
         }
 
