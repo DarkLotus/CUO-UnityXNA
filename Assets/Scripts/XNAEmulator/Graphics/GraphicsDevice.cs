@@ -38,6 +38,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
         internal void Clear( Color color )
         {
+            GL.Clear(true,true, UnityEngine.Color.yellow );
 
         }
         /*internal void DrawIndexedPrimitives( PrimitiveType primitiveType, int baseVertex, int minVertexIndex, int numVertices, int startIndex, int primitiveCount )
@@ -46,13 +47,14 @@ namespace Microsoft.Xna.Framework.Graphics
         }*/
         internal void SetRenderTarget( RenderTarget2D renderTarget )
         {
+
            // XNATest.Draw.Enqueue( new XNATest.SetRenderTextureDrawCall( renderTarget ) );
            if ( renderTarget != null )
            {
                // GL.PopMatrix();
                    
                UnityEngine.Graphics.SetRenderTarget( renderTarget.UnityTexture as RenderTexture );
-               GL.Clear(true,true, UnityEngine.Color.black );
+               GL.Clear(true,true, UnityEngine.Color.green );
                //GL.PushMatrix();
                GL.LoadPixelMatrix( 0, renderTarget.UnityTexture.width, renderTarget.UnityTexture.height, 0 );
 
@@ -79,6 +81,8 @@ namespace Microsoft.Xna.Framework.Graphics
         {
             //throw new NotImplementedException();
             ResetPools();
+            if(lastMaterial != null)
+            lastMaterial.SetPass(0);
         }
         public void ResetPools()
         {
@@ -145,12 +149,32 @@ namespace Microsoft.Xna.Framework.Graphics
             var tI = atlas.Get(Textures[0].Hash.ToString());
             for ( int i = 0; i < verts.Length; i++ )
             {
-                verts[i].TextureCoordinate.Y = 1 - verts[i].TextureCoordinate.Y;
                 
-                verts[i].TextureCoordinate.X *= 0.01137109375f;
+                
+                
+                verts[i].TextureCoordinate.Y = 1 - verts[i].TextureCoordinate.Y;
+                if (verts[i].TextureCoordinate.X == 0)
+                {
+                    verts[i].TextureCoordinate.X = (tI.Rect.xMin / 4096);
+                }
+                else
+                {
+                    verts[i].TextureCoordinate.X = (tI.Rect.xMax / 4096);
+
+                }
+                if (verts[i].TextureCoordinate.Y == 0)
+                {
+                    verts[i].TextureCoordinate.Y = (tI.Rect.yMin / 4096);
+                }
+                else
+                {
+                    verts[i].TextureCoordinate.Y = (tI.Rect.yMax / 4096);
+
+                }
+               /* verts[i].TextureCoordinate.X *= 0.01137109375f;
                 verts[i].TextureCoordinate.Y *= 0.01137109375f;
                 verts[i].TextureCoordinate.X += ( tI.Rect.xMin / 4096 );
-                verts[i].TextureCoordinate.Y += ( tI.Rect.yMin / 4096 );
+                verts[i].TextureCoordinate.Y += ( tI.Rect.yMin / 4096 );*/
                 
             }
             var testmesh = GetMesh(primitiveCount);
@@ -165,7 +189,7 @@ namespace Microsoft.Xna.Framework.Graphics
             }
              else
              {
-                 lastMaterial.SetPass(0);
+                 //lastMaterial.SetPass(0);
              }
            UnityEngine.Graphics.DrawMeshNow( testmesh.Mesh, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity );
            
