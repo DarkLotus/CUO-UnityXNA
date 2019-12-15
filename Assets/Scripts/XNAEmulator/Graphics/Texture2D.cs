@@ -52,7 +52,7 @@ namespace Microsoft.Xna.Framework.Graphics
 
         public int Width
         {
-            get { return unityTexture.width; }
+            get { return unityTexture?.width ?? 0; }
         }
         public int Height
         {

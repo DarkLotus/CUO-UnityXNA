@@ -124,12 +124,12 @@ namespace Microsoft.Xna.Framework.Graphics
                 atlas = new DynamicAtlas(4096,"atlas");
             }
 
-            if (Textures == null || Textures[0] == null || Textures[0].Hash == -1)
+            if (Textures == null || Textures[0] == null)
             {
                 Console.WriteLine("NullTexture");
                 return;
             }
-            if (atlas.Get(Textures[0].Hash.ToString()) == null)
+            if (Textures[0].Width != 600 &&  Textures[0].Hash != -1 && atlas.Get(Textures[0].Hash.ToString()) == null)
             {
                 if (Textures[0].IsDisposed)
                 {
@@ -146,37 +146,42 @@ namespace Microsoft.Xna.Framework.Graphics
             //Texture is in Textures[0]
             //XNATest.Draw.Enqueue(new XNATest.IndexedPrimativeDrawCall(Textures[0],verts,primitiveCount));
 
-            var tI = atlas.Get(Textures[0].Hash.ToString());
-            for ( int i = 0; i < verts.Length; i++ )
+            if (!(Textures[0] is RenderTarget2D) && Textures[0].Width != 600)
             {
-                
-                
-                
-                verts[i].TextureCoordinate.Y = 1 - verts[i].TextureCoordinate.Y;
-                if (verts[i].TextureCoordinate.X == 0)
-                {
-                    verts[i].TextureCoordinate.X = (tI.Rect.xMin / 4096);
-                }
-                else
-                {
-                    verts[i].TextureCoordinate.X = (tI.Rect.xMax / 4096);
 
-                }
-                if (verts[i].TextureCoordinate.Y == 0)
+                var tI = atlas.Get(Textures[0].Hash.ToString());
+                for ( int i = 0; i < verts.Length; i++ )
                 {
-                    verts[i].TextureCoordinate.Y = (tI.Rect.yMin / 4096);
-                }
-                else
-                {
-                    verts[i].TextureCoordinate.Y = (tI.Rect.yMax / 4096);
-
-                }
-               /* verts[i].TextureCoordinate.X *= 0.01137109375f;
-                verts[i].TextureCoordinate.Y *= 0.01137109375f;
-                verts[i].TextureCoordinate.X += ( tI.Rect.xMin / 4096 );
-                verts[i].TextureCoordinate.Y += ( tI.Rect.yMin / 4096 );*/
                 
+                
+                
+                    verts[i].TextureCoordinate.Y = 1 - verts[i].TextureCoordinate.Y;
+                    if (verts[i].TextureCoordinate.X == 0)
+                    {
+                        verts[i].TextureCoordinate.X = (tI.Rect.xMin / 4096);
+                    }
+                    else
+                    {
+                        verts[i].TextureCoordinate.X = (tI.Rect.xMax / 4096);
+
+                    }
+                    if (verts[i].TextureCoordinate.Y == 0)
+                    {
+                        verts[i].TextureCoordinate.Y = (tI.Rect.yMin / 4096);
+                    }
+                    else
+                    {
+                        verts[i].TextureCoordinate.Y = (tI.Rect.yMax / 4096);
+
+                    }
+                    /* verts[i].TextureCoordinate.X *= 0.01137109375f;
+                     verts[i].TextureCoordinate.Y *= 0.01137109375f;
+                     verts[i].TextureCoordinate.X += ( tI.Rect.xMin / 4096 );
+                     verts[i].TextureCoordinate.Y += ( tI.Rect.yMin / 4096 );*/
+                
+                }
             }
+          
             var testmesh = GetMesh(primitiveCount);
             testmesh.Populate( verts, verts.Length );
              if( lastMaterial  == null)
@@ -190,6 +195,14 @@ namespace Microsoft.Xna.Framework.Graphics
              else
              {
                  //lastMaterial.SetPass(0);
+             }
+
+             if (Textures[0].Width == 600)
+             {
+                 var mat = GetMat(Textures[0]);
+                 mat.SetPass(0);
+                 // MainTexure.SetPass( 0 );
+                 lastMaterial = null;
              }
            UnityEngine.Graphics.DrawMeshNow( testmesh.Mesh, UnityEngine.Vector3.zero, UnityEngine.Quaternion.identity );
            

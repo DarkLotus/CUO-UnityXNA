@@ -703,7 +703,7 @@ namespace ClassicUO.Game.Scenes
             batcher.End();
 
 
-            DrawLights(batcher);
+            //DrawLights(batcher);
 
             batcher.GraphicsDevice.SetRenderTarget(null);
         }
